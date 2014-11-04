@@ -567,8 +567,12 @@ int32_t FrameworkTB::convertBinToRoot()
 
   //start the waveform analysis
   WaveformAna *wana = new WaveformAna(
-                            _cfgParser->getParStr("Waveform analyser", "debug")
-                            );
+            _cfgParser->getParStr("Waveform analyser", "show pulses"),
+            _cfgParser->getParStr("Waveform analyser", "show histograms"),
+            _cfgParser->getParFlo("Waveform analyser", "cut max ampl"),
+            _cfgParser->getParVal("Waveform analyser", "avg buf len"),
+            _cfgParser->getParVal("Waveform analyser", "baseline buf len")
+            );
 
 
   //start Judith StorageIO class
@@ -596,7 +600,7 @@ int32_t FrameworkTB::convertBinToRoot()
   ProgBar *pb = new ProgBar("\n Converting binaries into judithROOT file...");
 
 
-  uint64_t old_timestamp = 0;
+  //uint64_t old_timestamp = 0;
   //---------------Run over all the raw files -------------------------------
   for (int32_t i = 0; i < maxEvents; i++)
   {
@@ -627,8 +631,8 @@ int32_t FrameworkTB::convertBinToRoot()
     );
 
 
-    //run analysis
-    wana->analyseWaveform();
+    //update histograms
+    wana->updateHistos();
 
 
     //retreive the amplitude and timing.
@@ -638,25 +642,25 @@ int32_t FrameworkTB::convertBinToRoot()
         (double) lcb->TRIGGER_TIME_min*60 +
         (double) lcb->TRIGGER_TIME_hour*3660 ) * 1e6 );  //Timestamp in microsecs.
 
-    cout<<i<<"\t"<<"TSdiff "<<timestamp-old_timestamp<<" \tcorrTSdiff=\t"<<39.0641*(timestamp-old_timestamp)<<endl;
-    old_timestamp = timestamp;
+    //cout<<i<<"\t"<<"TSdiff "<<timestamp-old_timestamp<<" \tcorrTSdiff=\t"<<39.0641*(timestamp-old_timestamp)<<endl;
+    //old_timestamp = timestamp;
 
 
     //save to storage
     Storage::Event* storageEvent = 0;
     storageEvent = new Storage::Event( 1 ); //event with one plane
-    if ( abs( (double)wana->getMaxAmplitude() ) > 0.005 /*[mV]. if there was a hit according to analyser*/)
+    if ( 1/*wana->getMaxAbsAmplitude() > 0.005 [mV]. if there was a hit according to analyser*/)
     {
       Storage::Hit* hit = storageEvent->newHit( 0 ); //hit in plane 1
       hit->setPix(0, 0); //pad detector only has one pixel
-      hit->setValue( (double)wana->getMaxAmplitude() ); //amplitude
+      hit->setValue( (double)wana->getMaxAbsAmplitude() ); //amplitude
       hit->setTiming(100); //delayof the max amplitude from trigger time
     }
     storageEvent->setTimeStamp( timestamp );
     storageEvent->setFrameNumber( i );
     storageEvent->setTriggerOffset(0);
     storageEvent->setTriggerInfo(0);
-    storageEvent->setInvalid(false);
+    storageEvent->setInvalid( wana->isInvalid() );
     storage->writeEvent(storageEvent);
     if (storageEvent) delete storageEvent;
 
@@ -666,6 +670,7 @@ int32_t FrameworkTB::convertBinToRoot()
     delete lcb;
 
   }
+
 
   if (storage) delete storage;
   delete pb;

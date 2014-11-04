@@ -14,7 +14,8 @@ void ProgBar::show(int32_t nevent, int32_t numEvents)
 
   int32_t progress = nevent + 1;
   if (nevent != 0)
-    if ( progress % 300 && nevent != numEvents ) return; //show every 300 events
+    if (progress != numEvents)
+      if ( progress % 300 && nevent != numEvents ) return; //show every 300 events
 
   int32_t progressProc = (progress * 100) / numEvents; // Now as an integer %
 

@@ -26,14 +26,15 @@ public:
   int32_t getSize () {return (int32_t)_time.size();};
   float* getTime() {return &_time[0];};
   float* getAmpl() {return &_ampl[0];};
-
-  void lowPassFilter();
+  void applyLowPassFilter(int32_t); //averaging buffer length
+  void applyDerivative();
   bool isFiltered() {return _filtered;};
 
 private:
   vector<float> _time;
   vector<float> _ampl;
   bool _filtered;
+
 
 
 };

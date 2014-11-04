@@ -51,6 +51,10 @@ public:
     std::string,                //header
     std::string                 //key
     );
+  float getParFlo(
+    std::string,                //header
+    std::string                 //key
+    );
   std::string getParStr(
     std::string,                //header
     std::string                 //key

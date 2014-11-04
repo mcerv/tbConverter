@@ -25,14 +25,13 @@ Waveform::Waveform( Waveform& orig)
 
 
 
-
-void Waveform::lowPassFilter()
+void Waveform::applyLowPassFilter(int32_t avgFactor = 15)
 {
 
 
   vector<float> _amplOrig = _ampl;
   // y[n] = (1-a)*x[n] + a*y[n-1];
-  int32_t avgFactor = 30;
+  //int32_t avgFactor = 15;
   for (int32_t i = avgFactor-1; i<_amplOrig.size(); i++)
   {
     float sum = 0;
@@ -43,9 +42,23 @@ void Waveform::lowPassFilter()
     _ampl.at(i) = sum;
 
   }
-
-  //for (int32_t i = 0; i < avgFactor; i++)
-  //  _ampl.at(i) = _ampl.at(avgFactor);
   _filtered = true;
+
+}
+
+
+void Waveform::applyDerivative()
+{
+  vector<float> _amplOrig = _ampl;
+  float tmp1 = 0.0;
+  float tmp2 = 0.0;
+
+  for (int32_t i = 1; i<_amplOrig.size()-1; i++)
+  {
+    tmp1 = _amplOrig.at(i) - _amplOrig.at(i-1);
+    tmp1 = _amplOrig.at(i+1) - _amplOrig.at(i);
+    _ampl.at(i) = ( tmp1 + tmp2 ) / 2 * 100;
+  }
+
 
 }
