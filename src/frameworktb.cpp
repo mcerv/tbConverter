@@ -353,16 +353,8 @@ int32_t FrameworkTB::convertRceToRoot()
   Converters::RceConvert *rceconv = new Converters::RceConvert(rceFile);
 
 
-  //set the environment
-  rceconv->setRce(  _cfgParser->getParVal("RCE","number of planes"),
-                    _cfgParser->getParVal("RCE","data format"),
-                    _cfgParser->getParVal("RCE","number of rces"),
-                    _cfgParser->getParVal("RCE","rce 1"),
-                    _cfgParser->getParVal("RCE","rce 2")
-                    );
-
   //set the planes
-  for (int32_t i = 0; i < _cfgParser->getParVal("RCE","number of planes"); i++)
+  for (int32_t i = 0; i < _cfgParser->getParVal("Setup","number of planes"); i++)
   {
     stringstream ss;
     ss << "Plane " << i+1;
@@ -383,7 +375,7 @@ int32_t FrameworkTB::convertRceToRoot()
   unsigned int treeMask = Storage::Flags::TRACKS | Storage::Flags::CLUSTERS;
   storage = new Storage::StorageIO( rootFile.c_str(),
                                     Storage::OUTPUT,
-                                    _cfgParser->getParVal("RCE","number of planes"), //how many planes
+                                    _cfgParser->getParVal("Setup","number of planes"), //how many planes
                                     treeMask);
 
 

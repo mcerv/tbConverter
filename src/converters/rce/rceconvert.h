@@ -32,13 +32,6 @@ public:
   ~RceConvert();
   RceConvert(string); //binary file.
 
-  int32_t setRce(
-    int32_t,    //number of planes
-    int32_t,    //data format
-    int32_t,    //number of rces
-    int32_t,    //rce 1 number
-    int32_t     //rce 2 number (optional)
-  );
 
   int32_t setRcePlane(
     bool,       //is it fei4
@@ -91,19 +84,6 @@ private:
   int32_t* _bufTDC;
   int32_t* _bufData;
 
-
-
-
-
-
-  //obsolete - has to be deleted
-  int32_t _nRces;
-  vector<int32_t> _rce;
-  int32_t _nPlanes;
-
-  int32_t _dataFormat;
-
-  bool _event0; //some of the variables get initialised during the first event0;
   int32_t _mainRce;
 
 

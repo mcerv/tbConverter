@@ -3,28 +3,6 @@
 namespace Converters{
 
 // ------------------initialisers ------------------------------------------
-int32_t RceConvert::setRce( int32_t nPlanes,    //number of planes
-                            int32_t dataFormat,    //data format
-                            int32_t nRces,    //number of rces
-                            int32_t rce1,    //rce 1 number
-                            int32_t rce2 = -1 )   //rce 2 number (optional)
-{
-  _nPlanes = nPlanes;
-  _dataFormat = dataFormat;
-  _nRces = nRces;
-  _rce.push_back(rce1);
-
-  if (nRces == 2 && !(rce2 == -1) ) //if n. of rces is 2 and second is NOT -1.
-    _rce.push_back(rce2);
-
-  // _rce = new Rce( nPlanes,
-  //                 dataFormat,
-  //                 nRces,
-  //                 rce1,
-  //                 rce2 );
-  return 0;
-}
-
 
 
 int32_t RceConvert::setRcePlane(  bool isFei4,       //is it fei4
@@ -262,18 +240,16 @@ int32_t RceConvert::readData()
     }
     else
       throw "Corrupt data! Couldn't recognise data structure.";
-
-
-
-
   }
-
 
   delete _bufData;
   return 0;
 }
 
 
+
+
+//map between the plane number, rce number and outlink
 int32_t RceConvert::mapPlane( int32_t rce, int32_t link)
 {
   for (int32_t i = 0; i < _plane.size(); i++)
@@ -395,14 +371,17 @@ RceConvert::RceConvert (string binFile)
 }
 
 
-RceConvert::RceConvert ()
+
+
+
+RceConvert::RceConvert () :
+  _event(NULL),
+  _fileSize(0),
+  _numEvents(0),
+  _mainRce(-1)
 {
   cout<<" RceConvert initialised."<<endl;
-  _numEvents = 0;
-  _fileSize = 0;
-  _event = NULL;
-  _event0 = true;
-  _mainRce = -1;
+
 }
 
 
