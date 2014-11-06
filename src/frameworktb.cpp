@@ -393,7 +393,7 @@ int32_t FrameworkTB::convertRceToRoot()
 
 
   //run over events while not end of file -----------------------------------
-  uint64_t old_timestamp = 0;
+  //uint64_t old_timestamp = 0;
   while ( rceconv->isGood() )
   {
 
@@ -432,9 +432,9 @@ int32_t FrameworkTB::convertRceToRoot()
     }
 
     //timestamp printout
-    uint64_t timestamp = (uint64_t) rceconv->getEvent()->getTimestamp();
-    cout<<rceconv->getNumEvents()<<"\t"<<"TSdiff "<<timestamp-old_timestamp<<endl;
-    old_timestamp = timestamp;
+    //uint64_t timestamp = (uint64_t) rceconv->getEvent()->getTimestamp();
+    //cout<<rceconv->getNumEvents()<<"\t"<<"TSdiff "<<timestamp-old_timestamp<<endl;
+    //old_timestamp = timestamp;
 
     //write event specific data into judith event
     storageEvent->setTimeStamp( rceconv->getEvent()->getTimestamp() );

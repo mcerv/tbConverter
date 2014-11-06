@@ -42,7 +42,8 @@ void ProgBar::show64(int64_t nevent, int64_t numEvents)
   int64_t progress = nevent + 1;
 
   if (nevent != 0)
-    if ( nevent != numEvents && (nevent % 100000 >10) ) return; //show every 300 events
+    if (progress != numEvents)
+      if ( nevent != numEvents && (nevent % 100000 > 10) ) return; //show every 300 events
 
   int64_t progressProc = (progress * 100) / numEvents; // Now as an integer %
   cout << "\r Progress: [";

@@ -18,6 +18,8 @@
 #include "TLatex.h"
 #include "TFitResultPtr.h"
 #include "TFitResult.h"
+#include "TF1.h"
+#include "TMath.h"
 
 using namespace std;
 
@@ -65,6 +67,7 @@ private:
   float _cutMaxAmpl;
 
   float calculateBaselineAmpl(); //avgbuflen, baselinebuflen
+  double langaufun(double *x, double *par);
 
 
 
