@@ -20,8 +20,6 @@ int main (int nArgs, char** argv)
     cout << " ERROR! :: " << e << endl;
   }
 
-  cout    <<endl
-          <<" ====================================================== "
-          <<endl<<endl;
+  cout    <<endl<<endl<<endl;
   return 0;
 }

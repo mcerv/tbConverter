@@ -12,6 +12,9 @@ FileHandler::FileHandler (string rdf, string cdf, string ff) :
   cout<<" FileHandler initialised with inputs."<<endl;
 }
 
+
+
+
 //this routine adds a slash in the end of the directory path if needed
 void FileHandler::checkEndSlash()
 {
@@ -31,15 +34,22 @@ void FileHandler::checkEndSlash()
 
 
 
+
 string FileHandler::getRawFilePath( int32_t nFile )
 {
   return _rawDataFolder + _rawFiles.at(nFile);
 }
 
+
+
+
 string FileHandler::getConvFilePath( int32_t nFile )
 {
   return _convDataFolder + _rawFiles.at(nFile);
 }
+
+
+
 
 
 int32_t FileHandler::retrieveRawDataFolderContents()
@@ -92,6 +102,9 @@ int32_t FileHandler::retrieveRawDataFolderContents()
 }
 
 
+
+
+
 int32_t FileHandler::convDataFolderExists()
 {
 
@@ -130,10 +143,11 @@ int32_t FileHandler::convDataFolderExists()
     delete ent;
 
   }
-
-
+  
   return 0;
 }
+
+
 
 
 

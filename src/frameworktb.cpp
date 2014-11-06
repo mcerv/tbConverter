@@ -6,7 +6,6 @@ FrameworkTB::FrameworkTB (int nArgs, char** argv) {
   //get input arguments
   _inputArgs = new InputArgs();
   _inputArgs->parseArgs(&nArgs,argv);
-  _cfgParser = new ConfigParser(_inputArgs->getConfig().c_str() );
 
   //run the TCT controller
   if (nArgs > 1)
@@ -32,6 +31,7 @@ int32_t FrameworkTB::switchCommands()
 {
   if (!_inputArgs->getCommand().compare("convertbintoroot"))
   {
+    _cfgParser = new ConfigParser(_inputArgs->getConfig().c_str() );
     convertBinToRoot();
   }
   else if (!_inputArgs->getCommand().compare("convertbintotext"))
@@ -44,6 +44,7 @@ int32_t FrameworkTB::switchCommands()
   }
   else if (!_inputArgs->getCommand().compare("convertrcetoroot"))
   {
+    _cfgParser = new ConfigParser(_inputArgs->getConfig().c_str() );
     convertRceToRoot();
   }
   else if (!_inputArgs->getCommand().compare("check"))
@@ -73,16 +74,13 @@ int32_t FrameworkTB::switchCommands()
 
 /*
 This routine checks the folders that are entered in the configuration file.
+OBSOLETE!!!
 */
 int32_t FrameworkTB::check()
 {
   cout<<" Checking consistencty of the config file and directories..."<<endl;
 
-  _fileH = new FileHandler(
-    _cfgParser->getParStr("Data","folder_raw"),
-    _cfgParser->getParStr("Data","folder_converted"),
-    _cfgParser->getParStr("Data","file_format")
-  );
+  _fileH = new FileHandler();
   _fileH->retrieveRawDataFolderContents();
 
   _fileH->convDataFolderExists();
@@ -114,71 +112,40 @@ int32_t FrameworkTB::convertTextToRoot()
   cout<<" Starting conversion of a text file - list - to ROOT format..."<<endl;
 
   //check all folders and read in all data files
-  _fileH = new FileHandler(
-    _cfgParser->getParStr("Data","folder_raw"),
-    _cfgParser->getParStr("Data","folder_converted"),
-    _cfgParser->getParStr("Data","file_format")
-  );
+  _fileH = new FileHandler();
 
 
   //------------ input/output path handling ---------------------------
 
-  //suffix for TEXT files.
-  string textSuffix = ".txt";
-
-  //set file path (the first and only file in the folder), which is weird and unusual.
+  //------------set the input txt list file name--------------
+  string listSuffix = ".txt";
   string listFile = "";
 
-  //check if the input folder was input via an argument.
-  if ( _inputArgs->getInput().compare("") ) //if input argument is NOT EMPTY
+  //if the output is not an empty string
+  if ( _inputArgs->getInput().compare("") )
   {
-
-    //check if it ends with ".txt"
+    //check if it ends with ".dat"
     if (!_inputArgs->getInput().compare (
-              _inputArgs->getInput().length() - textSuffix.length(),
-              textSuffix.length(), textSuffix)  )
+              _inputArgs->getInput().length() - listSuffix.length(),
+              listSuffix.length(), listSuffix)  )
     {
-      //set the listFile
+      //set the rootFile
       listFile = _inputArgs->getInput();
-      //to check that the folder for this file exists, we need to chop down the listFile path.
+      //to check that the folder for this file exists, we need to chop down the rootFile path.
       _fileH->setRawDataFolder( listFile.substr( 0 , listFile.find_last_of("/") )  );
-
     }
-    else //otherwise regard it as a FOLDER.
-    {
-      //if it doesn't end in .txt then it's a folder
-      _fileH->setRawDataFolder( _inputArgs->getInput() ); //set the folder to this.
-      _fileH->retrieveRawDataFolderContents(); // is it really needed?
-
-      //check if the first file in the folder is txt.
-      if (!_fileH->getRawFile(0).compare (
-                _fileH->getRawFile(0).length() - textSuffix.length(),
-                textSuffix.length(), textSuffix)  )
-      {
-        //set the listFile
-
-        listFile = _fileH->getRawDataFolder()  + _fileH->getRawFile(0); //take the first file from folder and pray it's txt.
-                                                                         // if it's not, the program WILL crash
-        //to check that the folder for this file exists, we need to chop down the listFile path.
-        _fileH->setRawDataFolder( listFile.substr( 0 , listFile.find_last_of("/") )  );
-
-      }
-      else
-        throw "Wrong input text file (taking the first one in the folder)! Check the path and file name.";
-
-    }
-
   }
+  cout<<" Input list .txt file: "<<listFile<<endl;
 
 
-  //suffix for ROOT files.
+
+
+  //------------set the output root file name--------------
   string rootSuffix = ".root";
-  //set name for the root file
-  string rootFile = _fileH->getConvDataFolder() + "out" + rootSuffix;
+  string rootFile = "";
 
-
-  //check if the output folder was input via an argument.
-  if ( _inputArgs->getOutput().compare("") ) //if output argument is NOT EMPTY
+  //if the output is not an empty string
+  if ( _inputArgs->getOutput().compare("") )
   {
     //check if it ends with ".root"
     if (!_inputArgs->getOutput().compare (
@@ -189,21 +156,22 @@ int32_t FrameworkTB::convertTextToRoot()
       rootFile = _inputArgs->getOutput();
       //to check that the folder for this file exists, we need to chop down the rootFile path.
       _fileH->setConvDataFolder( rootFile.substr( 0 , rootFile.find_last_of("/") )  );
-
     }
     else //otherwise regard it as a FOLDER.
     {
       //if it doesn't end in .root then it's a folder
       _fileH->setConvDataFolder( _inputArgs->getOutput() ); //set the folder to this.
-      rootFile = _fileH->getConvDataFolder() + "out" + rootSuffix; //set root file name
+      rootFile = _fileH->getConvDataFolder() + "outList" + rootSuffix; //set root file name
     }
   }
+  cout<<" Output ROOT file: "<<rootFile<<endl;
+
 
   //check for consistency of the input and output folders while opening/creating.
-  _fileH->convDataFolderExists(); //check if converted folder exists
+  _fileH->retrieveRawDataFolderContents();
+  _fileH->convDataFolderExists();
 
-  //print out file name.
-  cout<<" Judith file name: "<<rootFile<<endl;
+
 
   //------------ end of input/output path handling ---------------------------
 
@@ -306,33 +274,65 @@ int32_t FrameworkTB::convertRceToRoot()
   cout<<" Starting conversion of a RCE binary file to ROOT format..."<<endl;
 
   //check all folders and read in all data files
-  _fileH = new FileHandler(
-    _cfgParser->getParStr("Data","folder_raw"),
-    _cfgParser->getParStr("Data","folder_converted"),
-    _cfgParser->getParStr("Data","file_format")
-  );
-  _fileH->retrieveRawDataFolderContents();
-  _fileH->convDataFolderExists();
+  _fileH = new FileHandler();
 
 
 
-  //open a file with RCE converter.
-  string currentFile = _fileH->getRawFilePath(0); //take the first file in the folder
-  if (_cfgParser->getParStr("Data","data file").compare("") ) //take the filename from the cfg file
-    currentFile = _fileH->getRawDataFolder() + _cfgParser->getParStr("Data","data file");
-  if (_inputArgs->getInput().compare("")) // if there's an input file argument, take that
-    currentFile = _inputArgs->getInput();
-  cout<<" Input RCE file:   "<<currentFile<<endl;
+  //------------set the input rce dat file name--------------
+  string rceSuffix = ".dat";
+  string rceFile = "";
+
+  //if the output is not an empty string
+  if ( _inputArgs->getInput().compare("") )
+  {
+    //check if it ends with ".dat"
+    if (!_inputArgs->getInput().compare (
+              _inputArgs->getInput().length() - rceSuffix.length(),
+              rceSuffix.length(), rceSuffix)  )
+    {
+      //set the rootFile
+      rceFile = _inputArgs->getInput();
+      //to check that the folder for this file exists, we need to chop down the rootFile path.
+      _fileH->setRawDataFolder( rceFile.substr( 0 , rceFile.find_last_of("/") )  );
+    }
+  }
+  cout<<" Input RCE .dat file: "<<rceFile<<endl;
 
 
 
-  //set name for the output root file
-  string rootFile = _fileH->getConvDataFolder()+"outRce.root";
-  if (_inputArgs->getOutput().compare("")) // if there's an OUTput file argument
-    rootFile = _inputArgs->getOutput();
+
+  //------------set the output root file name--------------
+  string rootSuffix = ".root";
+  string rootFile = "";
+
+  //if the output is not an empty string
+  if ( _inputArgs->getOutput().compare("") )
+  {
+    //check if it ends with ".root"
+    if (!_inputArgs->getOutput().compare (
+              _inputArgs->getOutput().length() - rootSuffix.length(),
+              rootSuffix.length(), rootSuffix)  )
+    {
+      //set the rootFile
+      rootFile = _inputArgs->getOutput();
+      //to check that the folder for this file exists, we need to chop down the rootFile path.
+      _fileH->setConvDataFolder( rootFile.substr( 0 , rootFile.find_last_of("/") )  );
+    }
+    else //otherwise regard it as a FOLDER.
+    {
+      //if it doesn't end in .root then it's a folder
+      _fileH->setConvDataFolder( _inputArgs->getOutput() ); //set the folder to this.
+      rootFile = _fileH->getConvDataFolder() + "out-judith" + rootSuffix; //set root file name
+    }
+  }
   cout<<" Output ROOT file: "<<rootFile<<endl;
 
 
+  //check for consistency of the input and output folders while opening/creating.
+  _fileH->retrieveRawDataFolderContents();
+  _fileH->convDataFolderExists();
+
+  // ------------ end of input and output check ------------------
 
 
   //check if argument with nr. of events exists. if yes, then use
@@ -350,7 +350,7 @@ int32_t FrameworkTB::convertRceToRoot()
 
   //=====================set up the converter ===========================
   //start the RCE converter. open a binary file.
-  Converters::RceConvert *rceconv = new Converters::RceConvert(currentFile);
+  Converters::RceConvert *rceconv = new Converters::RceConvert(rceFile);
 
 
   //set the environment
@@ -506,29 +506,23 @@ int32_t FrameworkTB::convertBinToRoot()
   cout<<" Starting conversion of binary files to ROOT format..."<<endl;
 
   //check all folders and read in all data files
-  _fileH = new FileHandler(
-    _cfgParser->getParStr("Data","folder_raw"),
-    _cfgParser->getParStr("Data","folder_converted"),
-    _cfgParser->getParStr("Data","file_format")
-  );
+  _fileH = new FileHandler();
 
 
 
   //------------ input/output path handling ---------------------------
 
-  //check if the input folder was input via an argument.
-  if ( _inputArgs->getInput().compare("") ) //if input argument is NOT EMPTY
-    _fileH->setRawDataFolder( _inputArgs->getInput() ); //set the folder to this.
-
-
   //suffix for ROOT files.
   string rootSuffix = ".root";
-  //set name for the root file
-  string rootFile = _fileH->getConvDataFolder() + "out" + rootSuffix;
+  string rootFile ="";
 
 
-  //check if the output folder was input via an argument.
-  if ( _inputArgs->getOutput().compare("") ) //if output argument is NOT EMPTY
+  //the input folder was set via an argument.
+  _fileH->setRawDataFolder( _inputArgs->getInput() ); //set the folder to this.
+
+
+  //if the output is not an empty string
+  if ( _inputArgs->getOutput().compare("") )
   {
     //check if it ends with ".root"
     if (!_inputArgs->getOutput().compare (
@@ -539,7 +533,6 @@ int32_t FrameworkTB::convertBinToRoot()
       rootFile = _inputArgs->getOutput();
       //to check that the folder for this file exists, we need to chop down the rootFile path.
       _fileH->setConvDataFolder( rootFile.substr( 0 , rootFile.find_last_of("/") )  );
-
     }
     else //otherwise regard it as a FOLDER.
     {
@@ -548,6 +541,8 @@ int32_t FrameworkTB::convertBinToRoot()
       rootFile = _fileH->getConvDataFolder() + "out" + rootSuffix; //set root file name
     }
   }
+
+
 
   //check for consistency of the input and output folders while opening/creating.
   _fileH->retrieveRawDataFolderContents();
@@ -713,20 +708,14 @@ int32_t FrameworkTB::convertBinToText()
 
 
   //check all folders and read in all data files
-  _fileH = new FileHandler(
-    _cfgParser->getParStr("Data","folder_raw"),
-    _cfgParser->getParStr("Data","folder_converted"),
-    _cfgParser->getParStr("Data","file_format")
-  );
+  _fileH = new FileHandler();
 
 
-  //check if the input folder was input via an argument.
-  if ( _inputArgs->getInput().compare("") ) //if input argument is NOT EMPTY
-    _fileH->setRawDataFolder( _inputArgs->getInput() ); //set the folder to this.
+  // the input folder was input via an argument.
+  _fileH->setRawDataFolder( _inputArgs->getInput() ); //set the folder to this.
 
-  //check if the output folder was input via an argument.
-  if ( _inputArgs->getOutput().compare("") ) //if output argument is NOT EMPTY
-    _fileH->setConvDataFolder( _inputArgs->getOutput() ); //set the folder to this.
+  // the output folder was input via an argument.
+  _fileH->setConvDataFolder( _inputArgs->getOutput() ); //set the folder to this.
 
   //check for consistency of the input and output folders while opening/creating.
   _fileH->retrieveRawDataFolderContents();

@@ -33,9 +33,8 @@ Output: ROOT file name
 
 - convertbintotext
 
-Batch-converta LeCroy binary data files into text waveform data files.
+Batch-converts LeCroy binary data files into text waveform data files.
 
-Config_file: any empty text file
 Input:  path to the folder containing binary files
 Output: path to the folder containing resulting text files
 
@@ -43,7 +42,6 @@ Output: path to the folder containing resulting text files
 
 Converts a single text file containing a list of events into a Judith-compatible ROOT file format.
 
-Config_file: any empty text file
 Input:  TXT file name
 Output: ROOT file name 
 Format: EvtNo	Timestamp	IsHit	Ampl	Area	Baseline (\t for spacing)

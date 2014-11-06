@@ -25,13 +25,13 @@ void InputArgs::usage()
   cout << setw(w1) << "  check"
      << " : check if the configuration file and data files are ready (-f)\n";
   cout << setw(w1) << "  convertbintoroot"
-       << " : convert raw bin data files to Judith ROOT file (-f, {-i, -o})\n";
+       << " : convert raw bin data files to Judith ROOT file (-f, -i, -o, {-R})\n";
   cout << setw(w1) << "  convertbintotext"
-       << " : convert raw bin data files to a TEXT file (-f, {-i, -o})\n";
+       << " : convert raw bin data files to a TEXT file (-i, -o)\n";
   cout << setw(w1) << "  converttexttoroot"
-       << " : convert list text file to a Judith ROOT file (-f, {-i, -o})\n";
+       << " : convert list text file to a Judith ROOT file (-i, -o)\n";
   cout << setw(w1) << "  convertrcetoroot"
-       << " : convert raw RCE binary file to a Judith ROOT file (-f, {-i, -o})\n";
+       << " : convert raw RCE binary file to a Judith ROOT file (-f, -i, -o)\n";
   cout << endl;
 
   const unsigned int w2 = 13;
@@ -42,6 +42,7 @@ void InputArgs::usage()
   cout << "  -o  " << setw(w2) << "--output" << " : path to store data output\n";
   cout << "  -n  " << setw(w2) << "--numEvents" << " : number of events to process\n";
   cout << "  -s  " << setw(w2) << "--skipEvents" << " : number of events to skip at the start\n";
+  cout << "  -R  " << setw(w2) << "--results" << " : path to store a root file with results\n";
   cout << "  -h  " << setw(w2) << "--help" << " : print this help message\n";
   cout << endl;
 
@@ -69,37 +70,57 @@ void InputArgs::parseArgs(int* argc, char** argv)
       if ( (!arg.compare("-i") || !arg.compare("--input")) &&
          !_inFile.compare("") )
       {
-        _inFile = argv[++i];
+        if (++i > *argc-1)
+          throw "Missing argument value!";
+        _inFile = argv[i];
         cout << setw(w) << "  input name" << " : " << _inFile << endl;
       }
       else if ( (!arg.compare("-f") || !arg.compare("--config")) &&
                 !_outFile.compare("") )
       {
-        _cfgFile = argv[++i];
+        if (++i > *argc-1)
+          throw "Missing argument value!";
+        _cfgFile = argv[i];
         cout << setw(w) << "  config name" << " : " << _cfgFile << endl;
       }
       else if ( (!arg.compare("-o") || !arg.compare("--output")) &&
                 !_outFile.compare("") )
       {
-        _outFile = argv[++i];
+        if (++i > *argc-1)
+          throw "Missing argument value!";
+        _outFile = argv[i];
+        cout << setw(w) << "  output name" << " : " << _outFile << endl;
+      }
+      else if ( (!arg.compare("-R") || !arg.compare("--results")) &&
+                !_outFile.compare("") )
+      {
+        if (++i > *argc-1)
+          throw "Missing argument value!";
+        _resFile = argv[i];
         cout << setw(w) << "  output name" << " : " << _outFile << endl;
       }
       else if ( (!arg.compare("-c") || !arg.compare("--command")) &&
                 !_command.compare("") )
       {
-        _command = argv[++i];
+        if (++i > *argc-1)
+          throw "Missing argument value!";
+        _command = argv[i];
         cout << setw(w) << "  command" << " : " << _command << endl;
       }
       else if ( (!arg.compare("-n") || !arg.compare("--numEvents")) &&
                  !_numEvents )
       {
-        _numEvents = atoi( argv[++i] );
+        if (++i > *argc-1)
+          throw "Missing argument value!";
+        _numEvents = atoi( argv[i] );
         cout << setw(w) << "  numEvents" << " : " << _numEvents << endl;
       }
       else if ( (!arg.compare("-s") || !arg.compare("--skipEvents")) &&
                  !_numEvents )
       {
-        _skipEvents = atoi( argv[++i] );
+        if (++i > *argc-1)
+          throw "Missing argument value!";
+        _skipEvents = atoi( argv[i] );
         cout << setw(w) << "  skipEvents" << " : " << _skipEvents << endl;
       }
       else if ( (!arg.compare("-b") || !arg.compare("--noBar")) &&
@@ -131,6 +152,7 @@ string InputArgs::getCommand() const { return _command; }
 string InputArgs::getInput() const { return _inFile; }
 string InputArgs::getConfig() const { return _cfgFile; }
 string InputArgs::getOutput() const { return _outFile; }
+string InputArgs::getResOutput() const { return _resFile; }
 int32_t InputArgs::getNumEvents() const { return _numEvents; }
 int32_t InputArgs::getSkipEvents() const { return _skipEvents; }
 bool InputArgs::getNoBar() const { return _noBar; }
