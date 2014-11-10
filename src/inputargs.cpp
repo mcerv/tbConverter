@@ -76,7 +76,7 @@ void InputArgs::parseArgs(int* argc, char** argv)
         cout << setw(w) << "  input name" << " : " << _inFile << endl;
       }
       else if ( (!arg.compare("-f") || !arg.compare("--config")) &&
-                !_outFile.compare("") )
+                !_cfgFile.compare("") )
       {
         if (++i > *argc-1)
           throw "Missing argument value!";
@@ -92,12 +92,12 @@ void InputArgs::parseArgs(int* argc, char** argv)
         cout << setw(w) << "  output name" << " : " << _outFile << endl;
       }
       else if ( (!arg.compare("-R") || !arg.compare("--results")) &&
-                !_outFile.compare("") )
+                !_resFile.compare("") )
       {
         if (++i > *argc-1)
           throw "Missing argument value!";
         _resFile = argv[i];
-        cout << setw(w) << "  output name" << " : " << _outFile << endl;
+        cout << setw(w) << "  results name" << " : " << _resFile << endl;
       }
       else if ( (!arg.compare("-c") || !arg.compare("--command")) &&
                 !_command.compare("") )
@@ -106,6 +106,14 @@ void InputArgs::parseArgs(int* argc, char** argv)
           throw "Missing argument value!";
         _command = argv[i];
         cout << setw(w) << "  command" << " : " << _command << endl;
+      }
+      else if ( (!arg.compare("-T") || !arg.compare("--tag")) &&
+                !_tag.compare("") )
+      {
+        if (++i > *argc-1)
+          throw "Missing argument value!";
+        _tag = argv[i];
+        cout << setw(w) << "  tag" << " : " << _tag << endl;
       }
       else if ( (!arg.compare("-n") || !arg.compare("--numEvents")) &&
                  !_numEvents )
@@ -116,7 +124,7 @@ void InputArgs::parseArgs(int* argc, char** argv)
         cout << setw(w) << "  numEvents" << " : " << _numEvents << endl;
       }
       else if ( (!arg.compare("-s") || !arg.compare("--skipEvents")) &&
-                 !_numEvents )
+                 !_skipEvents )
       {
         if (++i > *argc-1)
           throw "Missing argument value!";
@@ -152,6 +160,7 @@ string InputArgs::getCommand() const { return _command; }
 string InputArgs::getInput() const { return _inFile; }
 string InputArgs::getConfig() const { return _cfgFile; }
 string InputArgs::getOutput() const { return _outFile; }
+string InputArgs::getTag() const { return _tag; }
 string InputArgs::getResOutput() const { return _resFile; }
 int32_t InputArgs::getNumEvents() const { return _numEvents; }
 int32_t InputArgs::getSkipEvents() const { return _skipEvents; }

@@ -20,6 +20,7 @@
 #include "TFitResult.h"
 #include "TF1.h"
 #include "TMath.h"
+#include "TFile.h"
 
 using namespace std;
 
@@ -31,7 +32,9 @@ public:
     string,               //show histograms at the end
     float,                //maximum amplitude cut
     int32_t,               //averaging buffer length
-    int32_t               //baseline averaging buffer length
+    int32_t,               //baseline averaging buffer length
+    string,                //optional - to save resulting histos to a root file
+    string                 //optional - a tag for the histos
     );
   ~WaveformAna();
 
@@ -44,7 +47,7 @@ public:
   void showWaveform();
   void showBothWaveforms();
 
-  int32_t updateHistos();
+  int32_t updateHistos(string saveHistos = ""); //to save at the end, write "SAVEANDCLOSE"
 
   float getMaxAbsAmplitude();
 
@@ -65,6 +68,8 @@ private:
   int32_t _numEvents;
   int32_t _numInvalid;
   float _cutMaxAmpl;
+  TFile *_resFile;
+  string _tag;
 
   float calculateBaselineAmpl(); //avgbuflen, baselinebuflen
   double langaufun(double *x, double *par);

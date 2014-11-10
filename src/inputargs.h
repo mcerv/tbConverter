@@ -12,6 +12,7 @@ private:
   std::string _outFile;
   std::string _resFile;
   std::string _command;
+  std::string _tag;
   int32_t _numEvents;
   int32_t _skipEvents;
   bool _noBar;
@@ -27,6 +28,7 @@ public:
   std::string getOutput() const;
   std::string getResOutput() const;
   std::string getCommand() const;
+  std::string getTag() const;
   int32_t getNumEvents() const;
   int32_t getSkipEvents() const;
   bool getNoBar() const;

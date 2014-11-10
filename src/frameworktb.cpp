@@ -261,6 +261,16 @@ int32_t FrameworkTB::convertTextToRoot()
 
 
 
+
+
+
+
+
+
+
+
+
+
 /* ==========================================================================
                 CONVERT RCE BINARY FILE TO JUDITH ROOT
 This routine converts a single RCE binary file .dat into a Judith ROOT file.
@@ -507,12 +517,14 @@ int32_t FrameworkTB::convertBinToRoot()
   //suffix for ROOT files.
   string rootSuffix = ".root";
   string rootFile ="";
+  string resultsFile ="";
 
-
+  //----------set input folder ----------------
   //the input folder was set via an argument.
   _fileH->setRawDataFolder( _inputArgs->getInput() ); //set the folder to this.
 
 
+  //----------set output folder or file ----------------
   //if the output is not an empty string
   if ( _inputArgs->getOutput().compare("") )
   {
@@ -535,13 +547,56 @@ int32_t FrameworkTB::convertBinToRoot()
   }
 
 
+  //-------------optional! if we want to save the analysis results
+  //if the output is not an empty string
+  if ( _inputArgs->getResOutput().compare("") )
+  {
+    //check if it ends with ".root"
+    if (!_inputArgs->getResOutput().compare (
+              _inputArgs->getResOutput().length() - rootSuffix.length(),
+              rootSuffix.length(), rootSuffix)  )
+    {
+      //set the rootFile
+      resultsFile = _inputArgs->getResOutput();
+      //to check that the folder for this file exists, we need to chop down the rootFile path.
+      _fileH->setResDataFolder( resultsFile.substr( 0 , resultsFile.find_last_of("/") )  );
+    }
+    else //otherwise regard it as a FOLDER.
+    {
+      //if it doesn't end in .root then it's a folder
+      _fileH->setResDataFolder( _inputArgs->getResOutput() ); //set the folder to this.
+      resultsFile = _fileH->getResDataFolder() + "outResults" + rootSuffix; //set root file name
+    }
+    //check the consistency of the folder for saving the results file
+    _fileH->resDataFolderExists();
+  }
+
+
 
   //check for consistency of the input and output folders while opening/creating.
   _fileH->retrieveRawDataFolderContents();
   _fileH->convDataFolderExists();
 
+
   //print out file name.
-  cout<<" Judith file name: "<<rootFile<<endl;
+  cout<<" Judith file name:  "<<rootFile<<endl;
+  cout<<" Results file name: "<<resultsFile<<endl;
+
+
+  //check if argument with nr. of events exists. if yes, then use
+  // this value for maxEvents.
+  int32_t maxEvents = _fileH->getNumRawFiles();
+  if (_inputArgs->getNumEvents() &&
+      _inputArgs->getNumEvents() <= maxEvents)
+    maxEvents = _inputArgs->getNumEvents();
+
+  //check of argument with nr. of SKIPPED events exists. If yes, then
+  //use this value for skippedEvents.
+  int32_t skipEvents = 0;
+  if (_inputArgs->getSkipEvents() )
+    skipEvents = _inputArgs->getSkipEvents();
+
+
 
   //------------ end of input/output path handling ---------------------------
 
@@ -558,7 +613,9 @@ int32_t FrameworkTB::convertBinToRoot()
             _cfgParser->getParStr("Waveform analyser", "show histograms"),
             _cfgParser->getParFlo("Waveform analyser", "cut max ampl"),
             _cfgParser->getParVal("Waveform analyser", "avg buf len"),
-            _cfgParser->getParVal("Waveform analyser", "baseline buf len")
+            _cfgParser->getParVal("Waveform analyser", "baseline buf len"),
+            resultsFile,
+            _inputArgs->getTag() //tag = bias voltage and/or sample name
             );
 
 
@@ -567,20 +624,6 @@ int32_t FrameworkTB::convertBinToRoot()
   unsigned int treeMask = Storage::Flags::TRACKS | Storage::Flags::CLUSTERS;
   storage = new Storage::StorageIO(rootFile.c_str(), Storage::OUTPUT, 1, //1 output
                                      treeMask);
-
-
-  //check if argument with nr. of events exists. if yes, then use
-  // this value for maxEvents.
-  int32_t maxEvents = _fileH->getNumRawFiles();
-  if (_inputArgs->getNumEvents() &&
-      _inputArgs->getNumEvents() <= maxEvents)
-    maxEvents = _inputArgs->getNumEvents();
-
-  //check of argument with nr. of SKIPPED events exists. If yes, then
-  //use this value for skippedEvents.
-  int32_t skipEvents = 0;
-  if (_inputArgs->getSkipEvents() )
-    skipEvents = _inputArgs->getSkipEvents();
 
 
   //initialize progress bar
@@ -658,6 +701,9 @@ int32_t FrameworkTB::convertBinToRoot()
 
   }
 
+  //save in results file if required by the input args.
+  //update histograms
+  wana->updateHistos("SAVEANDCLOSE");
 
   if (storage) delete storage;
   delete pb;

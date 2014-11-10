@@ -4,8 +4,9 @@
 //constructor.
 WaveformAna::WaveformAna (string showP, string showH,
                           float cutMaxAmpl,
-                          int32_t avgBufLen, int32_t blBufLen
-
+                          int32_t avgBufLen, int32_t blBufLen,
+                          string resFilePath,
+                          string tag
                           ) :
   _showPulse(!showP.compare("true")),
   _showHist(!showH.compare("true")),
@@ -18,17 +19,23 @@ WaveformAna::WaveformAna (string showP, string showH,
   _cHist(NULL),
   _numEvents(0),
   _numInvalid(0),
-  _cutMaxAmpl(cutMaxAmpl)
+  _cutMaxAmpl(cutMaxAmpl),
+  _resFile(NULL),
+  _tag(tag)
 
 {
   cout<<" Waveform analysis running."<<endl;
 
-  _app = new TApplication("rootApp",NULL,NULL);
-  _histAmpl = new TH1F("Amplitudes", "Amplitudes", 200, 0, 0.1); //0.5 for all
+  string histTitle = "Amplitude distribution for " + _tag;
 
-  if(_showHist)
+  _app = new TApplication("rootApp",NULL,NULL);
+  _histAmpl = new TH1F(histTitle.c_str(), histTitle.c_str(), 200, 0, 0.1); //0.5 for all
+  _cHist = new TCanvas("Amplitudes", "Amplitudes");
+
+
+  if ( resFilePath.compare("") ) //if res file exists, make it.
   {
-    _cHist = new TCanvas("Amplitude", "Amplitude");
+    _resFile = new TFile( resFilePath.c_str(),"UPDATE" );
   }
 
 
@@ -44,7 +51,10 @@ WaveformAna::~WaveformAna ()
   if (_histAmpl) delete _histAmpl;
   if (_cHist) delete _cHist;
   if (_app) delete _app;
+  if (_resFile) delete _resFile;
 }
+
+
 
 
 
@@ -64,6 +74,8 @@ void WaveformAna::showWaveform()
   delete wavegraph;
   delete c1;
 }
+
+
 
 
 
@@ -128,6 +140,8 @@ void WaveformAna::showBothWaveforms()
 
 
 
+
+
 //loads the waveform and duplicates it.
 int32_t WaveformAna::loadWaveform(
                             int64_t nRows,
@@ -158,9 +172,12 @@ int32_t WaveformAna::loadWaveform(
 
 
 
+
+
+
 // updates two histograms - the one showing individual pulses
 // and the integrated charge collected
-int32_t WaveformAna::updateHistos()
+int32_t WaveformAna::updateHistos(string saveHistos)
 {
   //increment number of events;
   _numEvents++;
@@ -172,7 +189,8 @@ int32_t WaveformAna::updateHistos()
 
   _histAmpl->Fill( getMaxAbsAmplitude() );
 
-  if (_showHist && !(_numEvents%300) )
+  if (      ( _showHist && !(_numEvents%300) )
+         || ( !saveHistos.compare("SAVEANDCLOSE") )   )
   {
     _cHist->cd();
 
@@ -202,7 +220,6 @@ int32_t WaveformAna::updateHistos()
     mpvFit->SetParName(3, "Gaus Width");
     TFitResultPtr ptr = _histAmpl->Fit("mpvFit", "SQ");
     ss << " MPV " << setw(5) << ptr->Parameter(1);
-    if (mpvFit) delete mpvFit;
 
     TLatex l;
     l.SetTextAlign(0);
@@ -210,6 +227,19 @@ int32_t WaveformAna::updateHistos()
     l.DrawLatex(0.05,0.8, ss.str().c_str() );
 
     _cHist->Update();
+    if (_resFile) //if results file exists
+    {
+      _resFile->cd();
+      _histAmpl->Write();
+      string name = "Langauss fit at " + _tag;
+      mpvFit->Write( name.c_str() );
+      _resFile->Close();
+    }
+
+
+
+    if (mpvFit) delete mpvFit;
+
 
   }
 
@@ -218,6 +248,10 @@ int32_t WaveformAna::updateHistos()
 
   return 0;
 }
+
+
+
+
 
 
 
@@ -266,6 +300,9 @@ float WaveformAna::getMaxAbsAmplitude()
   return maxAbsAmplitude;
 }
 
+
+
+//check if the pulse is invalid (too big)
 bool WaveformAna::isInvalid()
 {
   bool invalid = false;

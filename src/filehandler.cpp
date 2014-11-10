@@ -5,12 +5,6 @@ FileHandler::FileHandler ()
   cout<<" FileHandler initialised."<<endl;
 }
 
-FileHandler::FileHandler (string rdf, string cdf, string ff) :
-  _fileFormat(ff), _rawDataFolder(rdf), _convDataFolder(cdf)
-{
-  checkEndSlash(); //add a slash if missing
-  cout<<" FileHandler initialised with inputs."<<endl;
-}
 
 
 
@@ -18,17 +12,17 @@ FileHandler::FileHandler (string rdf, string cdf, string ff) :
 //this routine adds a slash in the end of the directory path if needed
 void FileHandler::checkEndSlash()
 {
-
-
-
   //add slashes at the end if needed.
   char rdfLast = *_rawDataFolder.rbegin();
   char cdfLast = *_convDataFolder.rbegin();
+  char resdfLast = *_resDataFolder.rbegin();
 
   if ( rdfLast != '/' )
     _rawDataFolder+="/";
   if ( cdfLast != '/' )
     _convDataFolder+="/";
+  if ( resdfLast != '/' )
+    _resDataFolder+="/";
 }
 
 
@@ -143,7 +137,56 @@ int32_t FileHandler::convDataFolderExists()
     delete ent;
 
   }
-  
+
+  return 0;
+}
+
+
+
+
+
+
+
+//check if results file exists
+int32_t FileHandler::resDataFolderExists()
+{
+
+  if (!_resDataFolder.compare("/")) //if empty
+    throw " res data folder path is an empty string!";
+
+
+  DIR *dir;
+  struct dirent *ent;
+  if ( (dir = opendir (_resDataFolder.c_str() )) == NULL)
+  {
+    /* could not open directory */
+    //if ( mkdir(_resDataFolder.c_str() ,S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) )
+    string sysstr = "mkdir -p ";
+    sysstr += _resDataFolder;
+    if ( system( sysstr.c_str() ) == -1 ) //if error while creating a directory
+      throw "error while opening res data folder. Create it manually.";
+    else
+      cout<<" res folder "<<_resDataFolder<<" has been created."<<endl;
+  }
+  else
+  {
+    int32_t nFiles=0;
+    char * name;
+    while ((ent = readdir (dir)) != NULL)
+    {
+      name = ent->d_name;
+      //check if there is a hidden file starting with a .
+      if (name[0] != '.')
+        nFiles++;
+    }
+
+    cout<<" res folder "<<_resDataFolder<<" ok. "<<nFiles
+        <<" files currently in the folder."<<endl;
+    closedir (dir);
+    delete ent;
+
+  }
+
   return 0;
 }
 
