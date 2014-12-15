@@ -45,6 +45,8 @@ private:
   unsigned int _numPlanes; // This can be read from the file structure
   Long64_t     _numEvents; // Number of events in the input file
 
+  const std::vector<bool**>* _noiseMasks;
+
   /* NOTE: trees can easily be added and removed from a file. So each type
    * of information that might or might not be included in a file should be
    * in its own tree. */
@@ -64,7 +66,7 @@ private:
   Double_t hitPosX[MAX_HITS];
   Double_t hitPosY[MAX_HITS];
   Double_t hitPosZ[MAX_HITS];
-  Int_t    hitValue[MAX_HITS];
+  Double_t hitValue[MAX_HITS];
   Int_t    hitTiming[MAX_HITS];
   Int_t    hitInCluster[MAX_HITS];
 
@@ -153,6 +155,8 @@ public:
 
   Event* readEvent(Long64_t n); // Read an event and generate its objects
   void writeEvent(Event* event); // Write an event at the end of the file
+
+  void setNoiseMasks(std::vector<bool**>* noiseMasks);
 
   Long64_t getNumEvents() const;
   unsigned int getNumPlanes() const;

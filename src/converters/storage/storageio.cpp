@@ -87,12 +87,20 @@ Event* StorageIO::readEvent(Long64_t n)
       {
         Track* track = event->getTrack(clusterInTrack[ncluster]);
         track->addCluster(cluster);
+        cluster->setTrack(track);
       }
     }
 
     // Generate a list of all hit objects
     for (int nhit = 0; nhit < numHits; nhit++)
     {
+      if (_noiseMasks && _noiseMasks->at(nplane)[hitPixX[nhit]][hitPixY[nhit]])
+      {
+        if (hitInCluster[nhit] >= 0)
+          throw "StorageIO: tried to mask a hit which is already in a cluster";
+        continue;
+      }
+
       Hit* hit = event->newHit(nplane);
       hit->setPix(hitPixX[nhit], hitPixY[nhit]);
       hit->setPos(hitPosX[nhit], hitPosY[nhit], hitPosZ[nhit]);
@@ -196,6 +204,12 @@ void StorageIO::writeEvent(Event* event)
   _numEvents++;
 }
 
+void StorageIO::setNoiseMasks(std::vector<bool**>* noiseMasks)
+{
+  if (noiseMasks && _numPlanes != noiseMasks->size())
+    throw "StorageIO: noise mask has more planes than will be read in";
+  _noiseMasks = noiseMasks;
+}
 
 Long64_t StorageIO::getNumEvents() const
 {
@@ -209,7 +223,8 @@ Storage::Mode StorageIO::getMode() const { return _fileMode; }
 
 StorageIO::StorageIO(const char* filePath, Mode fileMode, unsigned int numPlanes,
                      const unsigned int treeMask, const std::vector<bool>* planeMask) :
-  _filePath(filePath), _file(0), _fileMode(fileMode), _numPlanes(0), _numEvents(0)
+  _filePath(filePath), _file(0), _fileMode(fileMode), _numPlanes(0), _numEvents(0),
+  _noiseMasks(0)
 {
   if      (fileMode == INPUT)  _file = new TFile(_filePath, "READ");
   else if (fileMode == OUTPUT) _file = new TFile(_filePath, "RECREATE");
@@ -253,7 +268,7 @@ StorageIO::StorageIO(const char* filePath, Mode fileMode, unsigned int numPlanes
       hits->Branch("NHits", &numHits, "NHits/I");
       hits->Branch("PixX", hitPixX, "HitPixX[NHits]/I");
       hits->Branch("PixY", hitPixY, "HitPixY[NHits]/I");
-      hits->Branch("Value", hitValue, "HitValue[NHits]/I");
+      hits->Branch("Value", hitValue, "HitValue[NHits]/D"); //Matevz 20141203 I to D
       hits->Branch("Timing", hitTiming, "HitTiming[NHits]/I");
       hits->Branch("InCluster", hitInCluster, "HitInCluster[NHits]/I");
       hits->Branch("PosX", hitPosX, "HitPosX[NHits]/D");

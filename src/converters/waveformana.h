@@ -38,6 +38,10 @@ public:
     );
   ~WaveformAna();
 
+  void setCuts( int32_t,   //cut min maxampl time
+                int32_t,   //cut max maxampl time
+                float);    //cut min amplitude
+
   int32_t loadWaveform(
     int64_t,      //wave array count
     double,       //horizontal offset (time)
@@ -73,6 +77,12 @@ private:
 
   float calculateBaselineAmpl(); //avgbuflen, baselinebuflen
   double langaufun(double *x, double *par);
+
+  //cuts for amplitude detection
+  int32_t _cutLowMaxampltime;
+  int32_t _cutHiMaxampltime;
+  float _cutMinAmplitude;
+
 
 
 
