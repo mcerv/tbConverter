@@ -226,8 +226,8 @@ int32_t FrameworkTB::convertTextToRoot()
     {
       Storage::Hit* hit = storageEvent->newHit( 0 ); //hit in plane 1
       hit->setPix(0, 0); //pad detector only has one pixel
-      hit->setValue( txtconv->getListAmplitude(i) ); //amplitude
-      hit->setTiming( txtconv->getListArea(i) ); //area
+      hit->setValue( txtconv->getListArea(i) ); //amplitude
+      hit->setTiming( txtconv->getListRisetime(i) ); //area
     }
     storageEvent->setTimeStamp( txtconv->getListTimestamp(i) );
     storageEvent->setFrameNumber( txtconv->getListEvtNo(i) );
