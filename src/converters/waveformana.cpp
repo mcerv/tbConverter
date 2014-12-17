@@ -21,7 +21,10 @@ WaveformAna::WaveformAna (string showP, string showH,
   _numInvalid(0),
   _cutMaxAmpl(cutMaxAmpl),
   _resFile(NULL),
-  _tag(tag)
+  _tag(tag),
+  _cutLowMaxampltime(0),
+  _cutHiMaxampltime(0),
+  _cutMinAmplitude(0)
 
 {
   cout<<" Waveform analysis running."<<endl;
@@ -218,8 +221,8 @@ int32_t WaveformAna::updateHistos(string saveHistos)
     mpvFit->SetParName(1, "MPV");
     mpvFit->SetParName(2, "Norm");
     mpvFit->SetParName(3, "Gaus Width");
-    TFitResultPtr ptr = _histAmpl->Fit("mpvFit", "SQ");
-    ss << " MPV " << setw(5) << ptr->Parameter(1);
+    //TFitResultPtr ptr = _histAmpl->Fit("mpvFit", "SQ");
+    //ss << " MPV " << setw(5) << ptr->Parameter(1);
 
     TLatex l;
     l.SetTextAlign(0);
@@ -227,7 +230,7 @@ int32_t WaveformAna::updateHistos(string saveHistos)
     l.DrawLatex(0.05,0.8, ss.str().c_str() );
 
     _cHist->Update();
-    if (_resFile) //if results file exists
+    if (_resFile && !saveHistos.compare("SAVEANDCLOSE")) //if results file exists
     {
       _resFile->cd();
       _histAmpl->Write();
@@ -276,7 +279,14 @@ float WaveformAna::calculateBaselineAmpl()
 
 
 
-
+void WaveformAna::setCuts(int32_t lowMaxAmplTime = 0,
+                          int32_t hiMaxAmplTime = 0,
+                          float cutMinAmplitude = 0.0)
+{
+  _cutLowMaxampltime = lowMaxAmplTime;
+  _cutHiMaxampltime = hiMaxAmplTime;
+  _cutMinAmplitude = cutMinAmplitude;
+}
 
 
 //calculates the max amplitude in the pulse
@@ -289,14 +299,21 @@ float WaveformAna::getMaxAbsAmplitude()
   float baseline = calculateBaselineAmpl();
   //float baseline = _wave->getAmpl()[200]; //baseline is taken at sample 200
 
-  for (int32_t i = _avgBufLen; i < _wave->getSize(); i++)
+  //set the low and high limit in waveform to find the Max amplitude.
+  //if cuts exist, use those.
+  int32_t lowLimit = _avgBufLen;
+  int32_t hiLimit = _wave->getSize();
+  if (_cutLowMaxampltime) lowLimit = _cutLowMaxampltime;
+  if (_cutHiMaxampltime) hiLimit = _cutHiMaxampltime;
+
+
+  for (int32_t i = lowLimit; i < hiLimit; i++)
   {
     float currentAbsAmpl = abs( _wave->getAmpl()[i] - baseline ) ;
 
     if ( currentAbsAmpl > maxAbsAmplitude )
       maxAbsAmplitude = currentAbsAmpl;
   }
-
   return maxAbsAmplitude;
 }
 
@@ -309,6 +326,8 @@ bool WaveformAna::isInvalid()
 
   if ( getMaxAbsAmplitude() > _cutMaxAmpl)
     invalid = true;
+
+
 
   return invalid;
 }

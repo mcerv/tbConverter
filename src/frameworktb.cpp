@@ -428,8 +428,8 @@ int32_t FrameworkTB::convertRceToRoot()
             storageEvent->newHit( rceconv->getEvent()->getHit(eventHit).plane-1 ); //which plane
       hit->setPix( rceconv->getEvent()->getHit(eventHit).col,
                    rceconv->getEvent()->getHit(eventHit).row ); //pad detector only has one pixel
-      hit->setValue( rceconv->getEvent()->getHit(eventHit).value ); //amplitude
-      hit->setTiming( rceconv->getEvent()->getHit(eventHit).timing ); //delayof the max amplitude from trigger time
+      hit->setValue( (double)rceconv->getEvent()->getHit(eventHit).value ); //amplitude
+      hit->setTiming( (double)rceconv->getEvent()->getHit(eventHit).timing ); //delayof the max amplitude from trigger time
 
     }
 
@@ -679,13 +679,16 @@ int32_t FrameworkTB::convertBinToRoot()
     //save to storage
     Storage::Event* storageEvent = 0;
     storageEvent = new Storage::Event( 1 ); //event with one plane
-    if ( 1/*wana->getMaxAbsAmplitude() > 0.005 [mV]. if there was a hit according to analyser*/)
+    if ( wana->getMaxAbsAmplitude() > _cfgParser->getParFlo("Waveform analyser","cut min ampl") /*[V]. if there was a hit according to analyser*/)
     {
       Storage::Hit* hit = storageEvent->newHit( 0 ); //hit in plane 1
       hit->setPix(0, 0); //pad detector only has one pixel
+      hit->setTiming(2); //delayof the max amplitude from trigger time
       hit->setValue( (double)wana->getMaxAbsAmplitude() ); //amplitude
-      hit->setTiming(100); //delayof the max amplitude from trigger time
+
     }
+
+
     storageEvent->setTimeStamp( timestamp );
     storageEvent->setFrameNumber( i );
     storageEvent->setTriggerOffset(0);

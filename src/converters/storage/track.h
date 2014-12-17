@@ -33,16 +33,22 @@ private:
   unsigned int _numClusters;
   std::vector<Cluster*> _clusters;
 
+  // NOTE: this isn't stored in file, its a place holder for doing DUT analysis
+  unsigned int _numMatchedClusters;
+  std::vector<Cluster*> _matchedClusters;
+
 protected:
   int _index;
-  Track();
 
 public:
   Track(const Track& old);
+  Track();
 
   void addCluster(Cluster* cluster);
+  void addMatchedCluster(Cluster* cluster);
 
   Cluster* getCluster(unsigned int n) const;
+  Cluster* getMatchedCluster(unsigned int n) const;
 
   inline void setOrigin(double x, double y) { _originX = x; _originY = y; }
   inline void setOriginErr(double x, double y) { _originErrX = x; _originErrY = y; }
@@ -52,6 +58,7 @@ public:
   inline void setCovariance(double x, double y) { _covarianceX = x; _covarianceY = y; }
 
   inline unsigned int getNumClusters() const { return _numClusters; }
+  inline unsigned int getNumMatchedClusters() const { return _numMatchedClusters; }
   inline double getOriginX() const { return _originX; }
   inline double getOriginY() const { return _originY; }
   inline double getOriginErrX() const { return _originErrX; }
