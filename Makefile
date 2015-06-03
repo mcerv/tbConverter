@@ -4,7 +4,7 @@ LFLAGS = `root-config --ldflags --glibs` -O1
 OBJPATH = obj
 SRCPATH = src
 EXECUTABLE = tbConverter
-OBJECTS = $(OBJPATH)/configparser.o $(OBJPATH)/filehandler.o $(OBJPATH)/frameworktb.o $(OBJPATH)/inputargs.o $(OBJPATH)/main.o $(OBJPATH)/progbar.o $(OBJPATH)/lecroybin.o $(OBJPATH)/textconvert.o $(OBJPATH)/waveform.o $(OBJPATH)/waveformana.o $(OBJPATH)/hitbus.o $(OBJPATH)/rceconvert.o $(OBJPATH)/rceevent.o $(OBJPATH)/rceplane.o $(OBJPATH)/cluster.o $(OBJPATH)/event.o $(OBJPATH)/hit.o $(OBJPATH)/plane.o $(OBJPATH)/storageio.o $(OBJPATH)/track.o 
+OBJECTS = $(OBJPATH)/configparser.o $(OBJPATH)/filehandler.o $(OBJPATH)/frameworktb.o $(OBJPATH)/inputargs.o $(OBJPATH)/main.o $(OBJPATH)/progbar.o $(OBJPATH)/lecroybin.o $(OBJPATH)/textconvert.o $(OBJPATH)/waveform.o $(OBJPATH)/waveformana.o $(OBJPATH)/drsevent.o $(OBJPATH)/read_binary.o $(OBJPATH)/read_DRS.o $(OBJPATH)/hitbus.o $(OBJPATH)/rceconvert.o $(OBJPATH)/rceevent.o $(OBJPATH)/rceplane.o $(OBJPATH)/cluster.o $(OBJPATH)/event.o $(OBJPATH)/hit.o $(OBJPATH)/plane.o $(OBJPATH)/storageio.o $(OBJPATH)/track.o 
 
 all: tbConverter
 
@@ -40,6 +40,15 @@ $(OBJPATH)/waveform.o: $(SRCPATH)/converters/waveform.cpp
 
 $(OBJPATH)/waveformana.o: $(SRCPATH)/converters/waveformana.cpp
 	$(CC) $(CFLAGS) $(INCLUDES)  -c $(SRCPATH)/converters/waveformana.cpp -o $(OBJPATH)/waveformana.o
+
+$(OBJPATH)/drsevent.o: $(SRCPATH)/converters/drs/drsevent.cpp
+	$(CC) $(CFLAGS) $(INCLUDES)  -c $(SRCPATH)/converters/drs/drsevent.cpp -o $(OBJPATH)/drsevent.o
+
+$(OBJPATH)/read_binary.o: $(SRCPATH)/converters/drs/read_binary.cpp
+	$(CC) $(CFLAGS) $(INCLUDES)  -c $(SRCPATH)/converters/drs/read_binary.cpp -o $(OBJPATH)/read_binary.o
+
+$(OBJPATH)/read_DRS.o: $(SRCPATH)/converters/drs/read_DRS.cpp
+	$(CC) $(CFLAGS) $(INCLUDES)  -c $(SRCPATH)/converters/drs/read_DRS.cpp -o $(OBJPATH)/read_DRS.o
 
 $(OBJPATH)/hitbus.o: $(SRCPATH)/converters/rce/hitbus.cpp
 	$(CC) $(CFLAGS) $(INCLUDES)  -c $(SRCPATH)/converters/rce/hitbus.cpp -o $(OBJPATH)/hitbus.o

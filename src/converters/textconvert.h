@@ -44,9 +44,9 @@ public:
   int32_t getListEvtNo(int32_t i) {return _listEvtNo.at(i);};
   double  getListTimestamp(int32_t i) {return _listTimestamp.at(i);};
   bool    getListIsHit(int32_t i) {return _listIsHit.at(i);};
-  double  getListArea(int32_t i) {return _listArea.at(i);};
+  double  getListCharge(int32_t i) {return _listCharge.at(i);};
   double  getListRisetime(int32_t i) {return _listRisetime.at(i);};
-  double  getListBaseline(int32_t i) {return _listBaseline.at(i);};
+  double  getListChi(int32_t i) {return _listChi.at(i);};
 
   int32_t printList();
 
@@ -58,8 +58,8 @@ private:
   vector<double> _listTimestamp;
   vector<bool> _listIsHit;
   vector<double> _listRisetime;
-  vector<double> _listBaseline;
-  vector<double> _listArea;
+  vector<double> _listChi;
+  vector<double> _listCharge;
 
     
   int32_t readListFile(string);

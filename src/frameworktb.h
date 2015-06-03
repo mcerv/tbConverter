@@ -14,10 +14,13 @@
 #include "converters/storage/hit.h"
 #include "converters/textconvert.h"
 #include "converters/rce/rceconvert.h"
+#include "converters/drs/read_DRS.h"
 #include <stdlib.h>
 #include <iostream>
 #include <string>
 #include <cmath>
+#include <sstream>
+#include <iomanip>
 
 
 
@@ -44,11 +47,13 @@ private:
 
   int32_t switchCommands();
   int32_t convertBinToText();
+  int32_t convertDrsToText(); //for sonia
   int32_t check();
   //to do
   int32_t convertTextToRoot(); //for sonia
   int32_t convertBinToRoot(); // for my waveform
   int32_t convertRceToRoot(); // RCE binary format to Judith
+  int32_t convertDrsToRoot(); // RCE binary format to Judith
 
 
 

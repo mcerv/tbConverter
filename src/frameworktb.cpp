@@ -47,6 +47,16 @@ int32_t FrameworkTB::switchCommands()
     _cfgParser = new ConfigParser(_inputArgs->getConfig().c_str() );
     convertRceToRoot();
   }
+  else if (!_inputArgs->getCommand().compare("convertdrstoroot"))
+  {
+    _cfgParser = new ConfigParser(_inputArgs->getConfig().c_str() );
+    convertDrsToRoot();
+  }
+  else if (!_inputArgs->getCommand().compare("convertdrstotext"))
+  {
+    _cfgParser = new ConfigParser(_inputArgs->getConfig().c_str() );
+    convertDrsToText();
+  }
   else if (!_inputArgs->getCommand().compare("check"))
   {
     check();
@@ -102,32 +112,32 @@ int32_t FrameworkTB::check()
 
 
 /* ==========================================================================
-                CONVERT LIST TEXT FILE TO JUDITH ROOT
-This routine converts a text file with listed events into
-one Judith format ROOT file.
-   ========================================================================== */
+ CONVERT LIST TEXT FILE TO JUDITH ROOT
+ This routine converts a text file with listed events into
+ one Judith format ROOT file.
+ ========================================================================== */
 
 int32_t FrameworkTB::convertTextToRoot()
 {
   cout<<" Starting conversion of a text file - list - to ROOT format..."<<endl;
-
+  
   //check all folders and read in all data files
   _fileH = new FileHandler();
-
-
+  
+  
   //------------ input/output path handling ---------------------------
-
+  
   //------------set the input txt list file name--------------
   string listSuffix = ".txt";
   string listFile = "";
-
+  
   //if the output is not an empty string
   if ( _inputArgs->getInput().compare("") )
   {
     //check if it ends with ".dat"
     if (!_inputArgs->getInput().compare (
-              _inputArgs->getInput().length() - listSuffix.length(),
-              listSuffix.length(), listSuffix)  )
+         _inputArgs->getInput().length() - listSuffix.length(),
+         listSuffix.length(), listSuffix)  )
     {
       //set the rootFile
       listFile = _inputArgs->getInput();
@@ -136,21 +146,21 @@ int32_t FrameworkTB::convertTextToRoot()
     }
   }
   cout<<" Input list .txt file: "<<listFile<<endl;
-
-
-
-
+  
+  
+  
+  
   //------------set the output root file name--------------
   string rootSuffix = ".root";
   string rootFile = "";
-
+  
   //if the output is not an empty string
   if ( _inputArgs->getOutput().compare("") )
   {
     //check if it ends with ".root"
     if (!_inputArgs->getOutput().compare (
-              _inputArgs->getOutput().length() - rootSuffix.length(),
-              rootSuffix.length(), rootSuffix)  )
+            _inputArgs->getOutput().length() - rootSuffix.length(),
+            rootSuffix.length(), rootSuffix)  )
     {
       //set the rootFile
       rootFile = _inputArgs->getOutput();
@@ -165,90 +175,101 @@ int32_t FrameworkTB::convertTextToRoot()
     }
   }
   cout<<" Output ROOT file: "<<rootFile<<endl;
-
-
+  
+  
   //check for consistency of the input and output folders while opening/creating.
   _fileH->retrieveRawDataFolderContents();
   _fileH->convDataFolderExists();
-
-
-
+  
+  
+  
   //------------ end of input/output path handling ---------------------------
-
-
-
-
-
+  
+  
+  
+  
+  
   //start the text converter and open the file and read in everything
   Converters::TextConvert *txtconv = new Converters::TextConvert(listFile);
-
-
+  
+  
+  
+  
   //check if argument with nr. of events exists. if yes, then use
   // this value for maxEvents. BUT check that it's not bigger!
   int32_t maxEvents = txtconv->getListNumEvents();
   if ( _inputArgs->getNumEvents() &&
-       _inputArgs->getNumEvents() <= maxEvents )
+      _inputArgs->getNumEvents() <= maxEvents )
     maxEvents = _inputArgs->getNumEvents();
-
+  
+  
   //check of argument with nr. of SKIPPED events exists. If yes, then
   //use this value for skippedEvents.
   int32_t skipEvents = 0;
   if (_inputArgs->getSkipEvents() )
     skipEvents = _inputArgs->getSkipEvents();
-
-
+  
+  
   //start Judith StorageIO class
   Storage::StorageIO* storage = 0;
   unsigned int treeMask = Storage::Flags::TRACKS | Storage::Flags::CLUSTERS;
   storage = new Storage::StorageIO(rootFile.c_str(), Storage::OUTPUT, 1, //1 output
-                                     treeMask);
-
-
+                                   treeMask);
+  
+  
   //initialize progress bar
   ProgBar *pb = new ProgBar("\n Converting text list into judithROOT file...");
-
+  
+  //cout << "max num events"<< maxEvents <<endl;
+  
   //---------------Run over all the events in file -----------------------------
   for (int32_t i = 0; i < maxEvents ; i++)
   {
+    //S.F debbuging:cout<<" i = "<<i<<" listEvtNo(i)="<<txtconv->getListEvtNo(i)<<endl;
     //verify event number consistency
     if (i != txtconv->getListEvtNo(i) )
       throw "Event number doesn't correspond to the loop number.";
-
-
+    
+    
     //check if we need to skip this event.
     if ( i < skipEvents ) continue;
-
-
+    
+    
     //save to storage
     Storage::Event* storageEvent = 0;
     storageEvent = new Storage::Event( 1 ); //event with one plane
+    
+    
+    
     if ( txtconv->getListIsHit(i) /*if there was a hit according to analyser*/)
     {
+      
       Storage::Hit* hit = storageEvent->newHit( 0 ); //hit in plane 1
       hit->setPix(0, 0); //pad detector only has one pixel
-      hit->setValue( txtconv->getListArea(i) ); //amplitude
-      hit->setTiming( txtconv->getListRisetime(i) ); //area
+      hit->setValue( txtconv->getListCharge(i) ); //charge
+      hit->setTiming( txtconv->getListRisetime(i) );
     }
     storageEvent->setTimeStamp( txtconv->getListTimestamp(i) );
     storageEvent->setFrameNumber( txtconv->getListEvtNo(i) );
     storageEvent->setTriggerOffset(0);
-    storageEvent->setTriggerInfo( txtconv->getListBaseline(i) ); //baseline
+    storageEvent->setTriggerInfo( txtconv->getListChi(i) * txtconv->getListChi(i)); //chi
     storageEvent->setInvalid(false);
+    
     storage->writeEvent(storageEvent);
     if (storageEvent) delete storageEvent;
-
-
+    
+    
     //update progress bar
     if ( !_inputArgs->getNoBar() ) pb->show(i,maxEvents );
-
-
+    
+    
   }
   //-----------------------end of event loop --------------------------------
-
+  
   if (storage) delete storage;
   delete pb;
   delete txtconv;
-
+  
   return 0;
 }
 
@@ -476,6 +497,193 @@ int32_t FrameworkTB::convertRceToRoot()
   delete rceconv;
   delete pb;
   delete _fileH;
+  if (storage) delete storage;
+  return 0;
+}
+
+
+
+
+
+
+
+
+/* ==========================================================================
+                CONVERT DRS BINARY FILE TO JUDITH ROOT
+This routine converts a single DRS binary file .dat into a Judith ROOT file.
+It needs some input data from the config files: number of channels and ch mask
+   ========================================================================== */
+
+int32_t FrameworkTB::convertDrsToRoot()
+{
+
+  cout<<" Starting conversion of a DRS binary file to ROOT format..."<<endl;
+
+  //check all folders and read in all data files
+  _fileH = new FileHandler();
+
+
+
+  //------------set the input DRS dat file name--------------
+  string DRSSuffix = ".dat";
+  string DRSFile = "";
+
+  //if the input is not an empty string
+  if ( _inputArgs->getInput().compare("") )
+  {
+    //check if it ends with ".dat"
+    if (!_inputArgs->getInput().compare (
+              _inputArgs->getInput().length() - DRSSuffix.length(),
+              DRSSuffix.length(), DRSSuffix)  )
+    {
+      //set the rootFile
+      DRSFile = _inputArgs->getInput();
+      //to check that the folder for this file exists, we need to chop down the rootFile path.
+      _fileH->setRawDataFolder( DRSFile.substr( 0 , DRSFile.find_last_of("/") )  );
+    }
+  }
+  cout<<" Input DRS .dat file: "<<DRSFile<<endl;
+
+
+
+
+  //------------set the output root file name--------------
+  string rootSuffix = ".root";
+  string rootFile = "";
+
+  //if the output is not an empty string
+  if ( _inputArgs->getOutput().compare("") )
+  {
+    //check if it ends with ".root"
+    if (!_inputArgs->getOutput().compare (
+              _inputArgs->getOutput().length() - rootSuffix.length(),
+              rootSuffix.length(), rootSuffix)  )
+    {
+      //set the rootFile
+      rootFile = _inputArgs->getOutput();
+      //to check that the folder for this file exists, we need to chop down the rootFile path.
+      _fileH->setConvDataFolder( rootFile.substr( 0 , rootFile.find_last_of("/") )  );
+    }
+    else //otherwise regard it as a FOLDER.
+    {
+      //if it doesn't end in .root then it's a folder
+      _fileH->setConvDataFolder( _inputArgs->getOutput() ); //set the folder to this.
+      rootFile = _fileH->getConvDataFolder() + "out-judith" + rootSuffix; //set root file name
+    }
+  }
+  cout<<" Output ROOT file: "<<rootFile<<endl;
+
+
+  //check for consistency of the input and output folders while opening/creating.
+  _fileH->retrieveRawDataFolderContents();
+  _fileH->convDataFolderExists();
+
+  // ------------ end of input and output check ------------------
+
+
+  //check if argument with nr. of events exists. if yes, then use
+  // this value for maxEvents.
+  int32_t maxEvents = 0;
+  if (_inputArgs->getNumEvents() )
+    maxEvents = _inputArgs->getNumEvents();
+
+  //check of argument with nr. of SKIPPED events exists. If yes, then
+  //use this value for skippedEvents.
+  int32_t skipEvents = 0;
+  if (_inputArgs->getSkipEvents() )
+    skipEvents = _inputArgs->getSkipEvents();
+
+
+  //=====================set up the converter ===========================
+  //start the RCE converter. open a binary file.
+  Converters::read_DRS *readdrs = new Converters::read_DRS(DRSFile);
+
+  //start the waveform analysis
+  WaveformAna *wana = new WaveformAna(
+            _cfgParser->getParStr("Waveform analyser", "show pulses"),
+            _cfgParser->getParStr("Waveform analyser", "show histograms"),
+            _cfgParser->getParFlo("Waveform analyser", "cut max ampl"),
+            _cfgParser->getParVal("Waveform analyser", "avg buf len"),
+            _cfgParser->getParVal("Waveform analyser", "baseline buf len"),
+            "",
+            _inputArgs->getTag() //tag = bias voltage and/or sample name
+            );
+
+
+  //start Judith StorageIO class
+  Storage::StorageIO* storage = 0;
+  unsigned int treeMask = Storage::Flags::TRACKS | Storage::Flags::CLUSTERS;
+  storage = new Storage::StorageIO( rootFile.c_str(),
+                                    Storage::OUTPUT,
+                                    1, //how many planes
+                                    treeMask);
+
+
+  //initialize progress bar
+  ProgBar *pb = new ProgBar("\n Converting DRS binaries into judithROOT file...");
+
+
+
+  //run over events while not end of file -----------------------------------
+  //uint64_t old_timestamp = 0;
+  while ( readdrs->isGood() )
+  {
+    //Read a DRS event
+    readdrs->readEvent();
+
+    //send the waveform to the analyser
+    wana->loadWaveform(
+      //Number of rows in the array
+      (int64_t) 1024,   // (int64_t)
+      //Time offset
+      0,        //double
+      //Time column
+      readdrs->getEvent()->_time[0],       //vector of floats
+      //Amplitude column
+      readdrs->getEvent()->_waveform[0]          //vector of floats
+    );
+
+
+    //update histograms
+    wana->updateHistos();
+
+    //write values into root
+
+    //retreive the amplitude and timing.
+    //get the timestamp in microseconds
+
+    //cout<<i<<"\t"<<"TSdiff "<<timestamp-old_timestamp<<" \tcorrTSdiff=\t"<<39.0641*(timestamp-old_timestamp)<<endl;
+    //old_timestamp = timestamp;
+
+
+    //save to storage
+    Storage::Event* storageEvent = 0;
+    storageEvent = new Storage::Event( 1 ); //event with one plane
+    if ( wana->getMaxAbsAmplitude() > _cfgParser->getParFlo("Waveform analyser","cut min ampl") /*[V]. if there was a hit according to analyser*/)
+    {
+      Storage::Hit* hit = storageEvent->newHit( 0 ); //hit in plane 1
+      hit->setPix(0, 0); //pad detector only has one pixel
+      hit->setTiming(2); //delayof the max amplitude from trigger time
+      hit->setValue( (double)wana->getMaxAbsAmplitude() ); //amplitude
+
+    }
+
+
+    storageEvent->setTimeStamp( readdrs->getEvent()->getTimestamp() );
+    storageEvent->setFrameNumber( readdrs->getEvent()->_eh.event_serial_number );
+    storageEvent->setTriggerOffset(0);
+    storageEvent->setTriggerInfo(0);
+    storageEvent->setInvalid( wana->isInvalid() );
+    storage->writeEvent(storageEvent);
+    if (storageEvent) delete storageEvent;
+
+
+  }
+
+
+  if (readdrs) delete readdrs;
+  if (pb) delete pb;
+  if (_fileH) delete _fileH;
   if (storage) delete storage;
   return 0;
 }
@@ -863,4 +1071,172 @@ int32_t FrameworkTB::convertBinToText()
   delete _fileH;
 
   return 0;
+}
+
+
+
+
+/* ==========================================================================
+ CONVERT DRS TO TEXT WAVEFORM
+ This routine converts a set of DRS binary files to a set
+ of text format waveform files.
+ ========================================================================== */
+int32_t FrameworkTB::convertDrsToText()
+{
+
+    
+    cout<<" Starting conversion of a DRS binary file to TEXT format..."<<endl;
+    
+    //check all folders and read in all data files
+    _fileH = new FileHandler();
+    
+    
+    
+    //------------set the input DRS dat file name--------------
+    string DRSSuffix = ".dat";
+    string DRSFile = "";
+    string DRSFileOnly = "";
+  
+    //if the input is not an empty string
+    if ( _inputArgs->getInput().compare("") )
+    {
+      //check if it ends with ".dat"
+      if (!_inputArgs->getInput().compare (
+                                           _inputArgs->getInput().length() - DRSSuffix.length(),
+                                           DRSSuffix.length(), DRSSuffix)  )
+      {
+        //set the rootFile
+        DRSFile = _inputArgs->getInput();
+        //to check that the folder for this file exists, we need to chop down the rootFile path.
+        _fileH->setRawDataFolder( DRSFile.substr( 0 , DRSFile.find_last_of("/") )  );
+        DRSFileOnly= DRSFile.substr( DRSFile.find_last_of("/")+1, DRSFile.size() );
+//        cout<<"DRSFILEONLY "<<DRSFileOnly<<endl;
+      }
+    }
+    cout<<" Input DRS .dat file: "<<DRSFile<<endl;
+  
+  //=====================set up the converter ===========================
+  //start the RCE converter. open a binary file.
+  Converters::read_DRS *readdrs = new Converters::read_DRS(DRSFile);
+ 
+
+
+  
+  //----------set output folder or file ----------------
+  //if the output is not an empty string
+  string textFile = "";
+  if ( _inputArgs->getOutput().compare("") )
+  {
+    //if it doesn't end in .root then it's a folder
+    _fileH->setConvDataFolder( _inputArgs->getOutput() ); //set the folder to this.
+    //Text file names
+    textFile = _fileH->getConvDataFolder() + DRSFileOnly;
+    textFile = textFile.erase(textFile.size()-4, textFile.size());
+  }
+
+  
+  //start the text converter;
+  Converters::TextConvert *txtconv;
+  
+  
+  //check if argument with nr. of events exists. if yes, then use
+  // this value for maxEvents.
+  int32_t maxEvents = pow(2.0,30);
+  if (_inputArgs->getNumEvents() &&
+      _inputArgs->getNumEvents() <= maxEvents )
+    maxEvents = _inputArgs->getNumEvents();
+  
+  //check of argument with nr. of SKIPPED events exists. If yes, then
+  //use this value for skippedEvents.
+  int32_t skipEvents = 0;
+  if (_inputArgs->getSkipEvents() )
+    skipEvents = _inputArgs->getSkipEvents();
+  
+  
+  //initialize progress bar
+  ProgBar *pb = new ProgBar("\n Converting binaries into text files...");
+ 
+
+  
+  //---------------Run over all the raw files -------------------------------
+  for (int32_t i = 0; i < maxEvents; i++)
+  {
+    
+    //check if we need to skip this event.
+    if ( i < skipEvents ) continue;
+    
+
+    //open a file with lecroy converter and save it to a text file.
+    stringstream curFileName;
+    curFileName << textFile << "_" << setw(7) << setfill('0') << i << setfill(' ')<< ".txt";
+    
+//    //read a single binary file
+//    lcb = new Converters::LeCroyBin();
+//    lcb->readFile(currentFile);
+    readdrs->readEvent();
+    
+    
+    //initialize text storage
+    txtconv = new Converters::TextConvert();
+    
+    
+    //get the timestamp in microseconds
+//    uint64_t timestamp = (uint64_t)
+//    ( ( (double) lcb->TRIGGER_TIME_sec +
+//       (double) lcb->TRIGGER_TIME_min*60 +
+//       (double) lcb->TRIGGER_TIME_hour*3660 ) * 1e6 );  //Timestamp in microsecs.
+    uint64_t timestamp = readdrs->getEvent()->getTimestamp() ;
+    
+    
+    //open a text file with the same name and different extension
+    txtconv->openTextDataFile(curFileName.str() );
+    
+    
+    //write header to the file
+    txtconv->writeHeaderToTDF(
+                              //Evt Number
+                              i,
+                              //Timestamp - ULong64_t
+                              timestamp,
+                              //Horizontal interval for data points - sampling rate
+                              0.2
+                              );
+    
+    
+    //write data to the file
+    txtconv->writeDataToTDF(
+                            //Number of rows in the array
+                            1024,   // (int64_t)
+                            //Time offset
+                            0,        //double
+                            //Time column
+                            readdrs->getEvent()->_time[0],       //vector of floats
+                            //Amplitude column
+                            readdrs->getEvent()->_waveform[0]          //vector of floats
+                            );
+    
+    
+    //close the file
+    txtconv->closeTextDataFile();
+    
+    
+    //update progress bar
+    if ( !_inputArgs->getNoBar() ) pb->show(i,maxEvents );
+    delete txtconv;
+    
+  } // ------------------------------------------------------
+  delete readdrs;
+  
+  delete pb;
+  delete _fileH;
+  
+  return 0;
+
+    
+    
+
+  
+  
+  
+  
 }

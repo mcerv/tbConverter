@@ -19,60 +19,87 @@ TextConvert::TextConvert (string listFilePath)
 
 
 
-int32_t TextConvert::readListFile(string listFilePath)
-{
-  int32_t numColumns = 13;
-  ifstream inFile ( listFilePath.c_str() );
-
-  if (!inFile.is_open() )
-    throw " List text file couldn't be open.";
-
-  //read in the top row (headers)
-//string tmpStr;
-//  vector<string> topRow;
-//  for (int32_t i = 0; i < numColumns; i++)
-//  {
-//   inFile >> tmpStr;
-//    topRow.push_back(tmpStr);
-    //cout<<tmpStr<<endl;
-  //}
-
-
-  //read in all rows
-  _listNumEvents = 0;
-  double tmp;
-  while ( inFile.good() )
+  int32_t TextConvert::readListFile(string listFilePath)
   {
-    if (numColumns ==13)
-    {
-      //cout << "while(inFile.good()"<< endl;
-    inFile >> tmp;
-    _listEvtNo.push_back( (int32_t)tmp );
-    inFile >> tmp;
-    _listTimestamp.push_back( (double)tmp );
-    inFile >> tmp;
-    _listIsHit.push_back( (bool)tmp );
-    inFile >> tmp;
-    inFile >> tmp;
-    inFile >> tmp;
-    _listRisetime.push_back( (double)tmp );
-    inFile >> tmp;
-    _listBaseline.push_back( (double)tmp );
-    inFile >> tmp;
-    _listArea.push_back( (double)tmp );
-    inFile >> tmp;
-    inFile >> tmp;
-    inFile >> tmp;
-    inFile >> tmp;
-    inFile >> tmp;
+    int32_t numColumns = 9;
+    ifstream inFile ( listFilePath.c_str() );
     
-    _listNumEvents++;
+    if (!inFile.is_open() )
+      throw " List text file couldn't be open.";
+    
+    //read in the top row (headers)
+    //string tmpStr;
+    //  vector<string> topRow;
+    //  for (int32_t i = 0; i < numColumns; i++)
+    //  {
+    //   inFile >> tmpStr;
+    //    topRow.push_back(tmpStr);
+    //cout<<tmpStr<<endl;
+    //}
+    
+    
+    //read in all rows
+    _listNumEvents = 0;
+    double tmp;
+    while ( inFile.good() )
+    {
+      /*
+       if (numColumns ==13)
+       {
+       //cout << "while(inFile.good()"<< endl;
+       inFile >> tmp;
+       _listEvtNo.push_back( (int32_t)tmp );
+       inFile >> tmp;
+       _listTimestamp.push_back( (double)tmp );
+       inFile >> tmp;
+       _listIsHit.push_back( (bool)tmp );
+       inFile >> tmp;
+       inFile >> tmp;
+       inFile >> tmp;
+       _listRisetime.push_back( (double)tmp );
+       inFile >> tmp;
+       _listBaseline.push_back( (double)tmp );
+       inFile >> tmp;
+       _listArea.push_back( (double)tmp );
+       inFile >> tmp;
+       inFile >> tmp;
+       inFile >> tmp;
+       inFile >> tmp;
+       inFile >> tmp;
+       
+       _listNumEvents++;
+       }
+       */
+      
+      if (numColumns ==9)
+      {
+        
+        inFile >> tmp;
+        _listEvtNo.push_back( (int32_t)tmp );
+        inFile >> tmp;
+        _listTimestamp.push_back( (double)tmp );
+        inFile >> tmp;
+        _listIsHit.push_back( (bool)tmp );
+        inFile >> tmp;
+        inFile >> tmp;
+        inFile >> tmp;
+        _listRisetime.push_back( (double)tmp );
+        inFile >> tmp;
+        inFile >> tmp;
+        _listCharge.push_back( (double)tmp );
+        inFile >> tmp;
+        _listChi.push_back( (double)tmp );
+        
+        
+        _listNumEvents++;
+      }
+      
+      
     }
-
+    //printList();
+    return 0;
   }
-  //printList();
-  return 0;
-}
+
 
 
 
@@ -84,7 +111,7 @@ int32_t TextConvert::printList()
 
   for (int32_t i = 0; i < _listNumEvents; i++)
   {
-    cout<<"area "<<_listArea.at(i)<<endl;
+    cout<<"area "<<_listCharge.at(i)<<endl;
   }
   return 0;
 }
