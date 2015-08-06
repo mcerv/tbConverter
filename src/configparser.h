@@ -59,8 +59,10 @@ public:
     std::string,                //header
     std::string                 //key
     );
-
-
+  float getParValFloat(
+    std::string,                //header
+    std::string                 //key
+  );
 
   unsigned int getNumRows() const;
   const Row* getRow(unsigned int n) const;

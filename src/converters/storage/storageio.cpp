@@ -106,6 +106,8 @@ Event* StorageIO::readEvent(Long64_t n)
       hit->setPos(hitPosX[nhit], hitPosY[nhit], hitPosZ[nhit]);
       hit->setValue(hitValue[nhit]);
       hit->setTiming(hitTiming[nhit]);
+      hit->setT0(hitT0[nhit]);
+      hit->setChi2(hitChi2[nhit]);
 
       // If this hit is in a cluster, mark this (and the clusters tree is active)
       if (_clusters.at(nplane) && hitInCluster[nhit] >= 0)
@@ -187,6 +189,8 @@ void StorageIO::writeEvent(Event* event)
       hitPosZ[nhit] = hit->getPosZ();
       hitValue[nhit] = hit->getValue();
       hitTiming[nhit] = hit->getTiming();
+      hitT0[nhit] = hit->getT0();
+      hitChi2[nhit] = hit->getChi2();
       hitInCluster[nhit] = hit->getCluster() ? hit->getCluster()->getIndex() : -1;
     }
 
@@ -269,11 +273,13 @@ StorageIO::StorageIO(const char* filePath, Mode fileMode, unsigned int numPlanes
       hits->Branch("PixX", hitPixX, "HitPixX[NHits]/I");
       hits->Branch("PixY", hitPixY, "HitPixY[NHits]/I");
       hits->Branch("Value", hitValue, "HitValue[NHits]/D"); //Matevz 20141203 I to D
-      hits->Branch("Timing", hitTiming, "HitTiming[NHits]/I");
+      hits->Branch("Timing", hitTiming, "HitTiming[NHits]/D");//Malte 20150727 I to D
       hits->Branch("InCluster", hitInCluster, "HitInCluster[NHits]/I");
       hits->Branch("PosX", hitPosX, "HitPosX[NHits]/D");
       hits->Branch("PosY", hitPosY, "HitPosY[NHits]/D");
       hits->Branch("PosZ", hitPosZ, "HitPosZ[NHits]/D");
+      hits->Branch("T0", hitT0, "HitT0[NHits]/D");
+      hits->Branch("Chi2", hitChi2, "HitChi2[NHits]/D");
 
       clusters->Branch("NClusters", &numClusters, "NClusters/I");
       clusters->Branch("PixX", clusterPixX, "ClusterPixX[NClusters]/D");
@@ -359,6 +365,9 @@ StorageIO::StorageIO(const char* filePath, Mode fileMode, unsigned int numPlanes
         hits->SetBranchAddress("PosX", hitPosX, &bHitPosX);
         hits->SetBranchAddress("PosY", hitPosY, &bHitPosY);
         hits->SetBranchAddress("PosZ", hitPosZ, &bHitPosZ);
+        hits->SetBranchAddress("PosZ", hitPosZ, &bHitPosZ);
+        hits->SetBranchAddress("T0", hitT0, &bHitT0);
+        hits->SetBranchAddress("Chi2", hitChi2, &bHitChi2);
       }
 
       if (clusters)

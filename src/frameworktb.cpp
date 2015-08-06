@@ -52,6 +52,11 @@ int32_t FrameworkTB::switchCommands()
     _cfgParser = new ConfigParser(_inputArgs->getConfig().c_str() );
     convertDrsToRoot();
   }
+  else if (!_inputArgs->getCommand().compare("convertdrs3Tcelltoroot"))
+  {
+    _cfgParser = new ConfigParser(_inputArgs->getConfig().c_str() );
+    convertDrs3TcellToRoot();
+  }
   else if (!_inputArgs->getCommand().compare("convertdrstotext"))
   {
     _cfgParser = new ConfigParser(_inputArgs->getConfig().c_str() );
@@ -65,7 +70,7 @@ int32_t FrameworkTB::switchCommands()
   {
     throw "Wrong command. Exiting.";
   }
-
+  
   return 0;
 }
 
@@ -690,6 +695,254 @@ int32_t FrameworkTB::convertDrsToRoot()
 
 
 
+
+
+
+/* ==========================================================================
+                CONVERT DRS BINARY FILE FROM 3T CELL TO JUDITH ROOT
+This routine converts a single DRS binary file .dat into a Judith ROOT file.
+It needs some input data from the config files: number of channels and ch mask
+   ========================================================================== */
+
+int32_t FrameworkTB::convertDrs3TcellToRoot()
+{
+
+  cout<<" Starting conversion of a DRS binary file from 3T cell to ROOT format..."<<endl;
+
+  //check all folders and read in all data files
+  _fileH = new FileHandler();
+
+
+
+  //------------set the input DRS dat file name--------------
+  string DRSSuffix = ".dat";
+  string DRSFile = "";
+
+  //if the input is not an empty string
+  if ( _inputArgs->getInput().compare("") )
+  {
+    //check if it ends with ".dat"
+    if (!_inputArgs->getInput().compare (
+              _inputArgs->getInput().length() - DRSSuffix.length(),
+              DRSSuffix.length(), DRSSuffix)  )
+    {
+      //set the rootFile
+      DRSFile = _inputArgs->getInput();
+      //to check that the folder for this file exists, we need to chop down the rootFile path.
+      _fileH->setRawDataFolder( DRSFile.substr( 0 , DRSFile.find_last_of("/") )  );
+    }
+  }
+  cout<<" Input DRS .dat file: "<<DRSFile<<endl;
+
+
+
+
+  //------------set the output root file name--------------
+  string rootSuffix = ".root";
+  string rootFile = "";
+  string ntupleFileName = "";
+
+  //if the output is not an empty string
+  if ( _inputArgs->getOutput().compare("") )
+  {
+    //check if it ends with ".root"
+    if (!_inputArgs->getOutput().compare (
+              _inputArgs->getOutput().length() - rootSuffix.length(),
+              rootSuffix.length(), rootSuffix)  )
+    {
+      //set the rootFile
+      rootFile = _inputArgs->getOutput();
+      //to check that the folder for this file exists, we need to chop down the rootFile path.
+      _fileH->setConvDataFolder( rootFile.substr( 0 , rootFile.find_last_of("/") )  );
+      ntupleFileName = _inputArgs->getOutput();
+      ntupleFileName = ntupleFileName.substr(0, ntupleFileName.find(rootSuffix));
+      ntupleFileName = ntupleFileName + "-ntuple" + rootSuffix;
+    }
+    else //otherwise regard it as a FOLDER.
+    {
+      //if it doesn't end in .root then it's a folder
+      _fileH->setConvDataFolder( _inputArgs->getOutput() ); //set the folder to this.
+      rootFile = _fileH->getConvDataFolder() + "out-judith" + rootSuffix; //set root file name
+      ntupleFileName = _fileH->getConvDataFolder() + "out-judith-ntuple" + rootSuffix;
+    }
+  }
+  cout<<" Output ROOT file: "<<rootFile<<endl;
+  cout<<" Output NTuple file: "<<ntupleFileName<<endl;
+  
+  //Create the NTuple and its file
+  TFile *ntupleFile = new TFile(ntupleFileName.c_str(),"RECREATE");
+  //if(ntupleFile->IsOpen()) cout << "Ntuple File Open" << endl;
+  TNtuple *ntuple = new TNtuple("ntuple","data from ascii file","event:time:hit:a:m:c:to:b:chi:invalid");
+
+  //check for consistency of the input and output folders while opening/creating.
+  _fileH->retrieveRawDataFolderContents();
+  _fileH->convDataFolderExists();
+
+  // ------------ end of input and output check ------------------
+
+
+  //check if argument with nr. of events exists. if yes, then use
+  // this value for maxEvents.
+  int32_t maxEvents = 0;
+  if (_inputArgs->getNumEvents() )
+    maxEvents = _inputArgs->getNumEvents();
+
+  //check of argument with nr. of SKIPPED events exists. If yes, then
+  //use this value for skippedEvents.
+  int32_t skipEvents = 0;
+  if (_inputArgs->getSkipEvents() )
+    skipEvents = _inputArgs->getSkipEvents();
+
+
+  //=====================set up the converter ===========================
+  //start the RCE converter. open a binary file.
+  Converters::read_DRS *readdrs = new Converters::read_DRS(DRSFile);
+
+  //start the waveform analysis
+  WaveformAna3Tcell *wana = new WaveformAna3Tcell(
+            _cfgParser->getParStr("Waveform analyser", "show pulses"),
+            _cfgParser->getParStr("Waveform analyser", "show histograms"),
+            _cfgParser->getParVal("Waveform analyser", "avg buf len")
+            );
+  
+  wana->setCuts(_cfgParser->getParValFloat("Waveform analyser", "chi2 cut"),
+                _cfgParser->getParValFloat("Waveform analyser", "simple threshold cut"),
+                _cfgParser->getParValFloat("Waveform analyser", "time threshold cut"),
+                _cfgParser->getParValFloat("Waveform analyser", "time cut"),
+                _cfgParser->getParVal("Waveform analyser", "relax factor time"),
+                _cfgParser->getParVal("Waveform analyser", "relax factor threshold"),
+                _cfgParser->getParValFloat("Waveform analyser", "min hit detection time"),
+                _cfgParser->getParValFloat("Waveform analyser", "max hit detection time")
+                );
+
+
+  //start Judith StorageIO class
+  Storage::StorageIO* storage = 0;
+  unsigned int treeMask = Storage::Flags::TRACKS | Storage::Flags::CLUSTERS;
+  storage = new Storage::StorageIO( rootFile.c_str(),
+                                    Storage::OUTPUT,
+                                    1, //how many planes
+                                    treeMask);
+
+
+  //initialize progress bar
+  ProgBar *pb = new ProgBar("\n Converting DRS binaries from 3T cell into judithROOT file...");
+
+
+
+  //run over events while not end of file -----------------------------------
+  //uint64_t old_timestamp = 0;
+  int hitCnt = 0;
+  while ( readdrs->isGood() )
+  {
+    //Read a DRS event
+    readdrs->readEvent();
+
+
+    //send the reset waveform to the analyser
+    wana->loadResetWaveform(
+      //Number of rows in the array
+      (int64_t) 1024,   // (int64_t)
+      //Time offset
+      0,        //double
+      //Time column
+      readdrs->getEvent()->_time[3],       //vector of floats
+      //Amplitude column
+      readdrs->getEvent()->_waveform[3]          //vector of floats
+    );
+
+    //send the waveform to the analyser
+    wana->loadWaveform(
+      //Number of rows in the array
+      (int64_t) 1024,   // (int64_t)
+      //Time offset
+      0,        //double
+      //Time column
+      readdrs->getEvent()->_time[2],       //vector of floats
+      //Amplitude column
+      readdrs->getEvent()->_waveform[2]          //vector of floats
+    );
+
+    // Analyze the 3T cell waveform
+    bool hit = false;
+    float stepSize = 0;
+    float timeConstant = 0;
+    float hitDetectionTime = 0;
+    float offset = 0;
+    float slope = 0;
+    float chi2 = 0;
+    wana->analyze3TCellWaveform(hit, stepSize, timeConstant, hitDetectionTime, offset, slope, chi2);
+
+    if(wana->isInvalid())
+      cout << "!!!Event invalid!!!" << endl;
+    
+    if(hit){
+      hitCnt++;
+      cout << "\tDetected hit number " << hitCnt << " with step size of " << stepSize << " and time constant of " << timeConstant << " and hit detection time of " << hitDetectionTime << " and Chi2 of " << chi2 << endl;
+      cout << "---------- End of hit processing ----------\n" << endl;
+    }
+
+
+    ntuple->Fill(readdrs->getEvent()->_eh.event_serial_number,readdrs->getEvent()->getTimestamp(),hit,offset,slope,timeConstant,hitDetectionTime,abs(stepSize),chi2, wana->isInvalid());
+    //ntuple->Write();
+    //update histograms
+    if(hit && (!_cfgParser->getParStr("Waveform analyser", "show histograms").compare("true")))
+      wana->updateHistos();
+
+    //write values into root
+
+    //retreive the amplitude and timing.
+    //get the timestamp in microseconds
+
+    //cout<<i<<"\t"<<"TSdiff "<<timestamp-old_timestamp<<" \tcorrTSdiff=\t"<<39.0641*(timestamp-old_timestamp)<<endl;
+    //old_timestamp = timestamp;
+
+
+    //save to storage
+    Storage::Event* storageEvent = 0;
+    storageEvent = new Storage::Event( 1 ); //event with one plane
+    if (hit)
+    {
+      Storage::Hit* hit = storageEvent->newHit( 0 ); //hit in plane 1
+      hit->setPix(0, 0); //pad detector only has one pixel
+      hit->setTiming(timeConstant); //Charge collection time
+      hit->setValue(stepSize); //amplitude
+      hit->setT0(hitDetectionTime);
+      hit->setChi2(chi2);
+    }
+
+
+    storageEvent->setTimeStamp( readdrs->getEvent()->getTimestamp() );
+    storageEvent->setFrameNumber( readdrs->getEvent()->_eh.event_serial_number );
+    storageEvent->setTriggerOffset(0);
+    storageEvent->setTriggerInfo(0);
+    storageEvent->setInvalid(wana->isInvalid()); //To think about when event shall be considered invalid
+    storage->writeEvent(storageEvent);
+    if (storageEvent) delete storageEvent;
+    //if (wana) delete wana;
+
+
+  }
+  
+  ntupleFile->Write();
+  ntupleFile->Close();
+
+    cout << "\n\n********** FINISHED WAVE FORM ANALYSIS SUCCESSFULLY **********\n\n" << endl;
+    cout << "press any key to exit" << endl;
+
+
+  getchar();
+
+
+
+  if (readdrs) delete readdrs;
+  if (pb) delete pb;
+  if (_fileH) delete _fileH;
+  if (storage) delete storage;
+  if (wana) delete wana;
+  
+  return 0;
+}
 
 
 

@@ -67,8 +67,10 @@ private:
   Double_t hitPosY[MAX_HITS];
   Double_t hitPosZ[MAX_HITS];
   Double_t hitValue[MAX_HITS];
-  Int_t    hitTiming[MAX_HITS];
+  Double_t hitTiming[MAX_HITS];
   Int_t    hitInCluster[MAX_HITS];
+  Double_t hitT0[MAX_HITS];
+  Double_t hitChi2[MAX_HITS];
 
   Int_t    numClusters;
   Double_t clusterPixX[MAX_CLUSTERS];
@@ -113,7 +115,9 @@ private:
   TBranch* bHitValue;
   TBranch* bHitTiming;
   TBranch* bHitInCluster;
-
+  TBranch* bHitT0;
+  TBranch* bHitChi2;
+    
   TBranch* bNumClusters;
   TBranch* bClusterPixX;
   TBranch* bClusterPixY;

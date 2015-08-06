@@ -26,6 +26,7 @@ public:
   int32_t getSize () {return (int32_t)_time.size();};
   float* getTime() {return &_time[0];};
   float* getAmpl() {return &_ampl[0];};
+  int   getEntry();
   void applyLowPassFilter(int32_t); //averaging buffer length
   void applyDerivative();
   bool isFiltered() {return _filtered;};

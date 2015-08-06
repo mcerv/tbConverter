@@ -8,6 +8,7 @@
 #include "filehandler.h"
 #include "progbar.h"
 #include "converters/waveformana.h"
+#include "converters/waveformana3Tcell.h"
 #include "converters/lecroybin.h"
 #include "converters/storage/storageio.h"
 #include "converters/storage/event.h"
@@ -21,6 +22,9 @@
 #include <cmath>
 #include <sstream>
 #include <iomanip>
+#include <TFile.h>
+#include <TBranch.h>
+#include <TNtuple.h>
 
 
 
@@ -54,6 +58,7 @@ private:
   int32_t convertBinToRoot(); // for my waveform
   int32_t convertRceToRoot(); // RCE binary format to Judith
   int32_t convertDrsToRoot(); // RCE binary format to Judith
+  int32_t convertDrs3TcellToRoot(); //DRS binary from 3Tcell to root including waveform analysis
 
 
 

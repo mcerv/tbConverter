@@ -16,7 +16,9 @@ private:
   double _posZ;
   double _value; // Time over threshold, typically
   double _timing; // Level 1 accept, typically
-
+  double _t0;     // sub LVL1 hit detection time, used for example in XFAB
+  double _chi2;   // Chi2 of hit in case fit is needed to analog pixel output
+  
   Cluster* _cluster; // The cluster containing this hit
 
 protected:
@@ -38,6 +40,8 @@ public:
   inline void setPos(double x, double y, double z) { _posX = x; _posY = y; _posZ = z; }
   inline void setValue(double value) { _value = value; }
   inline void setTiming(double timing) { _timing = timing; }
+  inline void setT0(double t0) { _t0 = t0; }
+  inline void setChi2(double chi2) { _chi2 = chi2; }
 
   inline unsigned int getPixX() const { return _pixX; }
   inline unsigned int getPixY() const { return _pixY; }
@@ -46,6 +50,8 @@ public:
   inline double getPosZ() const { return _posZ; }
   inline double getValue() const { return _value; }
   inline double getTiming() const { return _timing; }
+  inline double getT0() const { return _t0; }
+  inline double getChi2() const { return _chi2; }
 
   friend class Plane;     // Access set plane method
   friend class Event;     // Access cluster index

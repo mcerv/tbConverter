@@ -239,6 +239,20 @@ int32_t ConfigParser::getParVal (std::string header1,
     return 0;
 }
 
+// Get any numerical value from parsed parameters
+float ConfigParser::getParValFloat (std::string header1,
+                                 std::string key1)
+{
+  for (unsigned int i=0; i<_numRows; i++)
+  {
+    if (!_parsedContents.at(i).isHeader)
+      if (!_parsedContents.at(i).header.compare( header1.c_str() ) )
+        if (!_parsedContents.at(i).key.compare( key1.c_str() ) )
+          return (float)valueToNumerical(_parsedContents.at(i).value);
+  }
+  return 0;
+}
+
 //get float value from parsed parameters
 float ConfigParser::getParFlo (std::string header1,
                                 std::string key1)
