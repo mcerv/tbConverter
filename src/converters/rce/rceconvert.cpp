@@ -221,7 +221,7 @@ int32_t RceConvert::readData()
       int32_t tot=rec.getToT();
       int32_t col=rec.getCol();
       int32_t row=rec.getRow();
-
+      //std::cout << "tempLink: " << tempLink << " tempRce: " << tempRce << std::endl;
       float x,y;
       if (chip<8){
         x=18*chip+col;
@@ -235,6 +235,7 @@ int32_t RceConvert::readData()
 
       // --> hit has to be written out
       _event->addHit (  x, y, tot, tempDiffBx, mapPlane(tempRce, tempLink) );
+      //std::cout << "map to plane: " << mapPlane(tempRce, tempLink) << std::endl;
 
 
     }
@@ -313,7 +314,7 @@ int32_t RceConvert::init()
   _numberOfRces = getWord();
 
   //initialise number of events
-  _numEvents = 0;
+  _numEvents = 1;
 
   //initialise number of hits in event
   _eventHits = 0;
@@ -377,7 +378,7 @@ RceConvert::RceConvert (string binFile)
 RceConvert::RceConvert () :
   _event(NULL),
   _fileSize(0),
-  _numEvents(0),
+  _numEvents(1),
   _mainRce(-1)
 {
   cout<<" RceConvert initialised."<<endl;
